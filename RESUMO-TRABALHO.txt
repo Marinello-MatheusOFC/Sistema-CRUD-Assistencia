@@ -1,0 +1,298 @@
+================================================================================
+ RESUMO DO TRABALHO - Sistema-CRUD-Assistencia
+ Data: 05/10/2026
+================================================================================
+
+ESTADO ATUAL: Etapas 1, 2 e 3 concluídas. Etapas 4 a 11 pendentes.
+Build: compilação com êxito, 0 erros e 0 warnings.
+Testes: 1 teste passando (SQLite em memória).
+
+
+--------------------------------------------------------------------------------
+1. ANÁLISE INICIAL DO REPOSITÓRIO
+--------------------------------------------------------------------------------
+
+O repositório estava praticamente vazio:
+  - Único arquivo: README.md (2 linhas, apenas descrição)
+  - 1 commit: b6785bb "Initial commit"
+  - Nenhum código existente, nenhum risco de sobrescrever trabalho
+
+Ambiente verificado nesta máquina:
+  - SDK .NET 10.0.201 (LTS, suportado até nov/2028) .... já instalado
+  - PostgreSQL local ............................... AUSENTE
+  - Docker ........................................ AUSENTE
+  - NuGet.org ...................................... acessível
+  - Cache de pacotes NuGet ......................... inexistente
+
+
+--------------------------------------------------------------------------------
+2. DECISÕES TÉCNICAS TOMADAS (com sua confirmação)
+--------------------------------------------------------------------------------
+
+.NET 10 LTS ................ já instalado, é o LTS atual
+CPF ........................ armazenado SÓ com dígitos (11) + índice único;
+                            validação de dígitos verificadores; formatação
+                            000.000.000-00 só na exibição
+NumeroOS .................. formato 2026-000042 (ano + Id, 6 dígitos),
+                            gerado após o INSERT quando o Id existe
+ValorTotal ................ NUNCA vem do formulário; calculado no service
+                            layer como ValorPecas + ValorMaoDeObra
+Dinheiro .................. decimal, nunca double
+Modelo .................... sem tipos específicos do PostgreSQL nas
+                            configurações, para permitir testes em SQLite
+Autenticação .............. ASP.NET Core Identity completo
+                            (AddIdentity<Usuario, IdentityRole>)
+Sem registro público ....... usuário inicial via seed controlado por
+                            variável de ambiente
+Autorização ............... FallbackPolicy (tudo exige login por padrão)
+Testes ..................... SQLite relacional em memória (EnsureCreated),
+                            não InMemory, para testar constraints reais
+
+Sua confirmação:
+  - ViaCEP: SIM, com degradação graciosa se a API estiver fora do ar
+  - Seed de dados fictícios: SIM, apenas em Development e apenas se o banco
+    estiver vazio
+  - Formato da OS: 2026-000042
+
+
+--------------------------------------------------------------------------------
+3. ESTRUTURA DE PROJETOS CRIADA
+--------------------------------------------------------------------------------
+
+  SistemaCrudAssistencia.slnx ............ solução (formato XML do .NET 10)
+
+  src/SistemaCrudAssistencia/ ............. projeto Web (SDK Web, net10.0)
+  tests/SistemaCrudAssistencia.Tests/ ...... projeto xUnit
+
+  Pastas dentro do projeto web:
+    Data/ ................. AppDbContext, DesignTimeDbContextFactory,
+                            Configuracoes/, Migrations/
+    Models/ ................ Entities/, Enums/, Extensions/, Filtros/,
+                            Validations/, ErrorViewModel.cs
+    Services/ .............. 5 services + Endereco/ (ViaCEP)
+                            + SeedExecutor + RegraDeNegocioException
+    Views/ ................. apenas template do .NET (6 arquivos)
+    wwwroot/lib/ ........... bootstrap, jquery, jquery-validation (2,3 MB,
+                            locais, sem CDN — funciona offline)
+
+Pacotes instalados:
+  src:    Npgsql.EntityFrameworkCore.PostgreSQL          10.0.3
+          Microsoft.EntityFrameworkCore.Design          10.0.12
+          Microsoft.EntityFrameworkCore.Tools           10.0.12
+          Microsoft.AspNetCore.Identity.EntityFrameworkCore  10.0.12
+  tests:  Microsoft.EntityFrameworkCore.Sqlite           10.0.12
+
+
+--------------------------------------------------------------------------------
+4. O QUE FOI IMPLEMENTADO
+--------------------------------------------------------------------------------
+
+4.1 ENTIDADES (Models/Entities/) — prontas e sem acoplamento a EF Core
+  - Cliente: Id, NomeCompleto, Cpf, Telefone, Email, Cep, Logradouro, Numero,
+             Complemento, Bairro, Cidade, Estado, DataCadastro, Ativo
+  - Aparelho: Id, ClienteId, TipoAparelho, Marca, Modelo, ImeiNumeroSerie,
+              Cor, Observacoes, DataCadastro
+  - OrdemServico: NumeroOS, ClienteId, AparelhoId, DataEntrada,
+              DefeitoRelatado, EstadoFisicoEntrada, AcessoriosEntregues,
+              ObservacoesEntrada, DiagnosticoTecnico, ServicoRealizado,
+              PecasUtilizadas, ValorPecas, ValorMaoDeObra, ValorTotal,
+              Status, DataConclusao, DataRetirada, ObservacoesInternas
+  - HistoricoOrdemServico: OrdemServicoId, Data, StatusAnterior, NovoStatus,
+              Observacao, Usuario
+  - Usuario: herda IdentityUser (senha com hash PBKDF2, nunca texto puro)
+
+  Métodos de domínio:
+  - OrdemServico.CalcularValorTotal()  -> ValorPecas + ValorMaoDeObra
+  - OrdemServico.AtualizarValorTotal()
+  - OrdemServico.GerarNumeroOS()       -> "{ano}-{Id:000000}"
+
+4.2 ENUM (Models/Enums/StatusOrdemServico.cs)
+  Recebido, EmAnalise, AguardandoAprovacao, AguardandoPeca, EmReparo, Pronto,
+  Entregue, Cancelado
+
+  Models/Extensions/StatusOrdemServicoExtensions.cs:
+  - Descricao()        -> texto em pt-BR para exibição
+  - BadgeCss()         -> classe CSS do badge Bootstrap
+  - EstaEmAndamento()  -> false para Entregue e Cancelado
+  - PermiteRetirada()  -> true para Pronto e Entregue
+  - Todos(), Parse()
+
+4.3 VALIDAÇÕES (Models/Validations/) — toda a validação server-side
+  Cpf.cs:
+    - Normalizar()  -> remove tudo que não for dígito
+    - EhValido()    -> 11 dígitos + dígitos verificadores + rejeita
+                      CPFs de dígitos repetidos
+    - Formatar()    -> 000.000.000-00
+    - ParaLog()     -> "***789" (protege LGPD nos logs)
+    - atributo [Cpf]
+  Telefone.cs: Normalizar, EhValido (10 ou 11 dígitos), EhCelular, Formatar,
+               ParaLog, atributo [Telefone]
+  Cep.cs: Normalizar, EhValido (8 dígitos), Formatar, atributo [Cep]
+  ValoresMonetarios.cs:
+    - TentarConverter() aceita "1.500,50", "150,50", "150.50", "R$ 150,50"
+    - teto de segurança de R$ 1.000.000,00
+    - Formatar() em pt-BR
+
+4.4 BANCO DE DADOS (Data/)
+  AppDbContext.cs com 4 DbSets: Clientes, Aparelhos, OrdensServico, Historicos
+  Configuracoes/ — 5 classes IEntityTypeConfiguration separadas do DbContext:
+    ClienteConfiguration, AparelhoConfiguration, OrdemServicoConfiguration,
+    HistoricoOrdemServicoConfiguration, ConfiguracaoColuna
+  DesignTimeDbContextFactory.cs — cria migrations sem subir a aplicação nem
+    precisar de banco disponível
+
+  13 ÍNDICES criados:
+    ix_clientes_cpf                        ÚNICO
+    ix_clientes_nome
+    ix_clientes_telefone
+    ix_aparelhos_imei_numero_serie
+    ix_ordens_servico_numero_os            ÚNICO
+    ix_ordens_servico_status
+    ix_ordens_servico_data_entrada         (DESC)
+    ix_ordens_servico_cliente_data_entrada
+    ix_historicos_ordem_servico_ordem_data
+    + índices de FK e índices do Identity
+
+  RELACIONAMENTOS (todos com FK):
+    Cliente 1:N Aparelho            DeleteBehavior.Restrict
+    Cliente 1:N OrdemServico        DeleteBehavior.Restrict
+    Aparelho 1:N OrdemServico       DeleteBehavior.Restrict
+    OrdemServico 1:N Historico      DeleteBehavior.Cascade
+
+  MIGRATION:
+    Data/Migrations/20261006012544_InitialCreate.cs
+    + Designer + AppDbContextModelSnapshot
+
+  DECISÃO SOBRE DATAS:
+    Todas as colunas DateTime foram definidas explicitamente como
+    "timestamp without time zone". Motivo: data de entrada e data de retirada
+    são horários LOCAIS da assistência, não UTC. Isso evita deslocamento de
+    fuso na leitura. Testado e compatível com SQLite.
+
+4.5 SERVICES (Services/) — regras críticas de negócio
+  ClienteService
+    - ListarAsync com busca por CPF, nome, telefone ou e-mail
+    - BuscarPorCpfAsync já normalizado
+    - Bloqueia CPF duplicado (checagem na aplicação + captura da corrida
+      entre duas telas via índice único do banco)
+    - Desativar/Reativar em vez de excluir (preserva histórico)
+
+  AparelhoService
+    - ListarPorClienteAsync, BuscarPorImeiAsync
+    - Grava IMEI como NULL quando vazio (não é obrigatório)
+    - Impede aparelho órfão
+
+  OrdemServicoService
+    - AbrirAsync: valida cliente ativo, valida que o aparelho é do cliente,
+      normaliza campos, status inicial Recebido, calcula total, gera
+      NumeroOS em 2 etapas (INSERT para obter Id, depois UPDATE) e registra
+      o primeiro item do histórico
+    - AlterarStatusAsync: grava histórico com status anterior, novo status,
+      observação e usuário
+    - FinalizarAsync: grava DataConclusao e move para Pronto
+    - RegistrarRetiradaAsync: grava DataRetirada e move para Entregue
+    - AtualizarAsync: recalcula o total, nunca confia no formulário
+    - Regras: Entregue e Cancelado são status TERMINAIS (não voltam atrás);
+      retirada só é permitida quando o status é Pronto
+
+  BuscaService ....... busca unificada (reutiliza os outros 2 services)
+  DashboardService ... contagens por status + últimas 10 OS
+  Endereco/ViaCepService .. consulta à API gratuita do ViaCEP; devolve null
+                          em falha de rede e o cadastro continua funcionando
+  RegraDeNegocioException .. erro de regra vira mensagem de formulário
+  SeedExecutor ........ cria o usuário admin e os dados de exemplo
+
+4.6 SEGURANÇA E CONFIGURAÇÃO (Program.cs)
+  - Conexão do banco APENAS por variável de ambiente
+    ConnectionStrings__Default; sem credencial em nenhum appsettings.json
+  - Falha rápida e explícita se a connection string estiver ausente
+  - Identity com lockout (10 tentativas, 10 minutos)
+  - Cookie: Secure em produção, HttpOnly, SameSite=Lax, 8h com renovação
+  - FallbackPolicy: TODAS as rotas exigem usuário autenticado
+  - Antiforgery automático em todos os formulários POST
+  - pt-BR como cultura padrão do sistema
+  - Migrations aplicadas no startup, desligadas em produção
+  - Tratamento de erro global (/Account/Error) e de status HTTP
+  - CPF e telefone NUNCA são registrados completos em log (helpers ParaLog)
+
+4.7 TESTES (tests/)
+  BancoEmMemoria.cs .... SQLite em memória relacional (constraints reais)
+  TesteDeCompatibilidadeSqlite.cs — 1 teste: grava e lê datas, gera número da
+                          OS, carrega Cliente e Aparelho, cria histórico
+  dotnet test: 1 aprovado, 0 falhas
+
+4.8 ARQUIVOS DE APOIO
+  .gitignore ......... bloqueia .env, appsettings local, bin/obj, .vs
+  .env.example ....... modelo de variáveis de ambiente (não versionado)
+  appsettings.json ................ valores neutros, sem segredo
+  appsettings.Development.json .... aplica migrations automaticamente
+  appsettings.Production.json ..... NÃO aplica migrations automaticamente
+
+
+--------------------------------------------------------------------------------
+5. AUDITORIA DE ARQUITETURA REALIZADA
+--------------------------------------------------------------------------------
+
+Resultado: o projeto É MVC na configuração, mas a camada Controller ainda não
+foi escrita (é o trabalho da Etapa 4).
+
+  - Sim, usa ASP.NET Core MVC: SDK Microsoft.NET.Sdk.Web,
+    AddControllersWithViews() e MapControllerRoute() presentes
+  - NÃO existe nenhum Controller neste momento
+  - Views: apenas os 6 arquivos de template padrão do .NET
+  - NÃO usa: Razor Pages, Blazor, Minimal APIs, Web API nem SPA
+  - Separação entre Models, Data e Services está adequada
+  - Entidades sem nenhum acoplamento a EF Core
+
+Conclusão: nenhuma migração de arquitetura é necessária. Falta apenas
+implementar controllers e views conforme o plano.
+
+Itens apontados na auditoria para ajuste nas próximas etapas:
+  - Models/ErrorViewModel.cs está no namespace errado (Models em vez de
+    Models/ViewModels)
+  - Views/Shared/Error.cshtml está em inglês e usa assinatura antiga
+  - Views/_ViewImports.cshtml precisa de mais @using
+  - Views/Shared/_Layout.cshtml ainda é o layout padrão, sem sidebar
+  - wwwroot ainda sem pastas css/ e js/
+
+
+--------------------------------------------------------------------------------
+6. ETAPAS RESTANTES
+--------------------------------------------------------------------------------
+
+  Etapa 4   Autenticação: AccountController (Login, Logout, Error,
+            AcessoNegado, HttpStatus) + Views
+  Etapa 5   Layout com sidebar + HomeController (Dashboard)
+  Etapa 6   Clientes: listagem, cadastro, edição, detalhes, desativar,
+            histórico + aparelhos
+  Etapa 7   Aparelhos: cadastro, edição, detalhes
+  Etapa 8   Ordens de Serviço: wizard Nova OS (CPF -> busca/cadastro ->
+            aparelho existente/novo -> defeito -> criar), listagem, detalhes,
+            editar, atualizar status, finalizar, retirada
+  Etapa 9   Busca rápida unificada + view de impressão + ViaCEP
+  Etapa 10  Testes das regras críticas (CPF duplicado, geração do número da
+            OS, cálculo de valores, mudança de status, relações
+            cliente/aparelho/OS, abertura de OS para cliente existente)
+  Etapa 11  README.md, Dockerfile, docker-compose.yml, revisão final de
+            segurança
+
+Estimativa: ~30 arquivos novos e 6 arquivos a alterar.
+Nada já escrito precisa ser descartado ou reescrito.
+
+
+--------------------------------------------------------------------------------
+7. PENDÊNCIAS DO AMBIENTE
+--------------------------------------------------------------------------------
+
+  - Não há PostgreSQL instalado nesta máquina: para EXECUTAR o sistema é
+    preciso uma destas opções:
+      (a) instalar o Docker e usar o docker-compose.yml (Etapa 11)
+      (b) instalar o PostgreSQL local
+      (c) criar uma branch de desenvolvimento gratuita no Neon
+  - Compilar, criar migrations e rodar os testes NÃO exigem banco de dados.
+  - A string de conexão nunca deve ser gravada em appsettings.json nem
+    commitada: use sempre a variável ConnectionStrings__Default.
+
+================================================================================
+ FIM DO RESUMO
+================================================================================
