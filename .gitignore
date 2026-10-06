@@ -1,0 +1,37 @@
+## .NET / Build
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.user
+*.suo
+*.userprefs
+.vs/
+.vscode/
+.idea/
+
+## Testes
+[Tt]est[Rr]esults/
+*.coverage
+coverage*.xml
+coverage*.json
+
+## Segredos e configuracao local  (NUNCA versionar)
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.*.Local.json
+appsettings.Development.local.json
+*.pfx
+*.p12
+*.key
+secrets.json
+
+## Sistema operacional / Diversos
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*~
