@@ -1,4 +1,4 @@
-namespace SistemaCrudAssistencia.Models;
+namespace SistemaCrudAssistencia.Models.ViewModels;
 
 public class ErrorViewModel
 {

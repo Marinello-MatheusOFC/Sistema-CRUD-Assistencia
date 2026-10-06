@@ -1,0 +1,203 @@
+================================================================================
+ DIAGNÓSTICO COMPLETO - Sistema-CRUD-Assistencia
+ Data: 06/10/2026
+================================================================================
+
+SITUAÇÃO ATUAL: Etapas 1, 2, 3 e 4 CONCLUÍDAS. Etapas 5 a 11 PENDENTES.
+Build ............ 0 erros, 0 avisos
+Testes ........... 1 aprovado, 0 falhas
+Alterações ....... todas no working tree, NÃO commitadas (commit só se pedido)
+
+
+--------------------------------------------------------------------------------
+1. O QUE FOI FEITO ATÉ AGORA
+--------------------------------------------------------------------------------
+
+1.1 ETAPA 1 A 3 (já concluídas em sessões anteriores)
+  - Solução .NET 10 (SistemaCrudAssistencia.slnx) com projeto Web + projeto de
+    testes xUnit
+  - Entidades: Cliente, Aparelho, OrdemServico, HistoricoOrdemServico, Usuario
+    (herda IdentityUser), sem acoplamento a EF Core
+  - Banco: AppDbContext, 5 configurations, migration InitialCreate,
+    13 índices, relacionamentos com FK e DeleteBehavior correto
+  - Services: ClienteService, AparelhoService, OrdemServicoService,
+    BuscaService, DashboardService, ViaCepService, SeedExecutor
+  - Validações server-side: CPF, Telefone, CEP, valores monetários
+  - Program.cs: Identity (senha forte + lockout 10/10min), cookie 8h seguro,
+    FallbackPolicy (tudo exige login), antiforgery global, pt-BR,
+    erro global em /Account/Error e status HTTP em /Account/HttpStatus
+  - Seed: primeiro usuário administrador criado por variáveis de ambiente
+    (ADMIN_EMAIL / ADMIN_PASSWORD) — sem cadastro público
+
+1.2 ETAPA 4 - AUTENTICAÇÃO (executada nesta sessão)
+
+  Arquivos criados:
+    Controllers/AccountController.cs
+    Models/ViewModels/LoginViewModel.cs
+    Models/ViewModels/StatusHttpViewModel.cs
+    Models/ViewModels/ErrorViewModel.cs        (movido de Models/)
+    Views/Account/Login.cshtml
+    Views/Account/AcessoNegado.cshtml
+    Views/Account/Error.cshtml
+    Views/Account/HttpStatus.cshtml
+    Views/Account/_ViewStart.cshtml            (usa _LayoutConta)
+    Views/Shared/_LayoutConta.cshtml           (layout simples das telas de conta)
+
+  Arquivos modificados:
+    Views/_ViewImports.cshtml    (namespaces efetivamente necessários)
+    Views/Shared/Error.cshtml    (reescrito em pt-BR)
+
+  Arquivos removidos:
+    Models/ErrorViewModel.cs     (movido para Models/ViewModels/)
+
+  AccountController (pequeno, sem regra de negócio duplicada):
+    - Login GET ........ monta LoginViewModel com returnUrl
+    - Login POST ........ valida ModelState -> SignInManager.PasswordSignInAsync
+                          -> sucesso: redireciona para returnUrl local ou Home
+                          -> lockout: mensagem de conta bloqueada
+                          -> falha: mensagem única "E-mail/usuário ou senha
+                            inválidos." (não revela qual campo falhou)
+    - Logout POST ....... SignOutAsync -> redirect para Login
+    - AcessoNegado ...... página pt-BR para falta de permissão
+    - Error ............. ErrorViewModel com RequestId (Activity/TraceIdentifier)
+    - HttpStatus ........ StatusHttpViewModel.Criar(codigo) com mensagens pt-BR
+                          para 400/401/403/404/405/408/429/500/502/503/504
+
+  Segurança mantida (nada foi enfraquecido):
+    - FallbackPolicy intacta: tudo exige autenticação por padrão
+    - Antiforgery global (AutoValidateAntiforgeryToken) intacta
+    - Cookie: 8h, sliding, HttpOnly, SameSite=Lax, Secure em produção
+    - Lockout: 10 tentativas / 10 minutos, aplicado com lockoutOnFailure:true
+    - HTTPS: UseHsts + UseHttpsRedirection em produção
+    - Senha: somente no Identity (PBKDF2 com salt), nenhuma cópia na aplicação
+    - [AllowAnonymous] apenas nas telas de conta/erro (necessário para evitar
+      loop com FallbackPolicy e com UseStatusCodePagesWithReExecute)
+    - Logout NÃO tem [AllowAnonymous] -> protegido pela FallbackPolicy
+    - returnUrl validada com Url.IsLocalUrl (sem open redirect)
+
+  Recursos que NÃO foram criados (por decisão/explícita):
+    cadastro público, login social, recuperação de senha por e-mail,
+    autenticação de dois fatores.
+
+
+--------------------------------------------------------------------------------
+2. O QUE FALTA (próximas etapas)
+--------------------------------------------------------------------------------
+
+  Etapa 5  Layout com sidebar + HomeController (Dashboard)
+  Etapa 6  Clientes: listagem, cadastro, edição, detalhes, desativar,
+           histórico + aparelhos
+  Etapa 7  Aparelhos: cadastro, edição, detalhes
+  Etapa 8  Ordens de Serviço: wizard Nova OS, listagem, detalhes, edição,
+           atualização de status, finalização, retirada
+  Etapa 9  Busca rápida unificada + view de impressão + ViaCEP
+  Etapa 10 Testes das regras críticas (CPF duplicado, número da OS, cálculo de
+           valores, mudanças de status, relações, abertura de OS)
+  Etapa 11 README.md, Dockerfile, docker-compose.yml, revisão final de segurança
+
+  Itens de auditoria ainda pendentes (pertencem à Etapa 5):
+    - Views/Shared/_Layout.cshtml ainda é o layout padrão, sem sidebar
+    - wwwroot ainda sem pastas css/ e js/
+
+
+--------------------------------------------------------------------------------
+3. PROBLEMAS ENCONTRADOS
+--------------------------------------------------------------------------------
+
+  3.1 SDK .NET AUSENTE (resolvido)
+      O SDK não estava instalado na máquina (contrariava o resumo anterior).
+      Sem ele era impossível rodar build/testes.
+      SOLUÇÃO: instalado Microsoft .NET SDK 10.0.401 via winget,
+      com aprovação do usuário.
+
+  3.2 HOMEPAGE INEXISTENTE (pendente até a Etapa 5)
+      O AccountController redireciona após o login para Home/Index, mas o
+      HomeController ainda não foi criado (escopo da Etapa 5).
+      Efeito: até lá, acessar "/" retorna a página HttpStatus "404 — Página não
+      encontrada" (em pt-BR). Nada foi criado fora do escopo para não duplicar
+      trabalho da próxima etapa.
+
+  3.3 WWWROOT SEM css/ E js/ (pendente até a Etapa 5)
+      Views/Shared/_Layout.cshtml referencia ~/css/site.css e ~/js/site.js,
+      que ainda não existem (o navegador ignora, sem erro de build).
+      Enquanto isso, as telas de conta usam _LayoutConta, que depende apenas
+      do Bootstrap local em wwwroot/lib — funciona offline.
+
+  3.4 SEM POSTGRESQL / SEM DOCKER (limitação do ambiente)
+      A aplicação não pode ser executada em runtime nesta máquina.
+      Conforme planejado, NÃO houve mudança de arquitetura por causa disso:
+      build, migrations (DesignTimeDbContextFactory) e testes (SQLite em
+      memória) continuam independentes do PostgreSQL externo.
+
+  3.5 ALTERAÇÕES NÃO COMMITADAS
+      Os arquivos da Etapa 4 estão apenas no working tree. Nenhum commit foi
+      feito porque não foi solicitado.
+
+  3.6 NENHUM ERRO DE CÓDIGO
+      Build e testes passam sem erros e sem warnings evitáveis.
+
+
+--------------------------------------------------------------------------------
+4. DIAGNÓSTICO TÉCNICO
+--------------------------------------------------------------------------------
+
+  4.1 ARQUITETURA
+      ASP.NET Core MVC puro (SDK Web, net10.0, AddControllersWithViews,
+      MapControllerRoute). Sem Razor Pages, Blazor, Minimal APIs, Web API ou SPA.
+      Camadas: Models (entidades/VMs) / Data (EF Core) / Services (regras de
+      negócio) / Controllers (finos) / Views (Razor em pt-BR).
+      Nenhuma migração de arquitetura é necessária.
+
+  4.2 SEGURANÇA (checklist)
+      [OK] Autenticação: ASP.NET Core Identity (sem autenticação manual)
+      [OK] Senhas: apenas no Identity, hash PBKDF2 + salt
+      [OK] FallbackPolicy: toda rota exige usuário autenticado
+      [OK] Antiforgery: filtro global em todas as actions POST
+      [OK] Cookies: HttpOnly, SameSite=Lax, Secure em produção, 8h/sliding
+      [OK] Lockout: 10 tentativas / 10 minutos, AllowedForNewUsers = true
+      [OK] HTTPS: HSTS + redirecionamento em produção
+      [OK] Credenciais: mensagem de erro genérica, sem vazamento de estado
+      [OK] returnUrl: apenas URLs locais (sem open redirect)
+      [OK] Sem cadastro público: primeiro usuário via seed (variáveis de ambiente)
+      [OK] Connection string: só por variável de ambiente, nunca em appsettings
+      [OK] Logs: CPF/telefone nunca logados completos (helpers ParaLog)
+
+  4.3 BANCO DE DADOS
+      PostgreSQL + Npgsql, migration InitialCreate já criada, migrations
+      automáticas em Development e desligadas em produção.
+      Nada foi alterado nesta etapa.
+
+  4.4 TESTES
+      SQLite relacional em memória (EnsureCreated) com constraints reais.
+      1 teste: compatibilidade de datas, geração de número de OS (2026-000042),
+      carregamento de relações e histórico.
+      Resultado: 1 aprovado, 0 falhas.
+      Faltam os testes das regras críticas (Etapa 10).
+
+  4.5 BUILD
+      dotnet build -> 0 erros, 0 avisos (SDK 10.0.401).
+
+  4.6 AMBIENTE
+      .NET SDK 10.0.401 .......... instalado nesta sessão (via winget)
+      PostgreSQL ................. ausente
+      Docker ..................... ausente
+      NuGet ...................... acessível
+      Execução em runtime ........ bloqueada pela ausência do banco
+
+
+--------------------------------------------------------------------------------
+5. PRÓXIMOS PASSOS
+--------------------------------------------------------------------------------
+
+  Imediato: Etapa 5 — Layout com sidebar + HomeController (Dashboard).
+  Depois: Etapas 6 a 11 conforme a lista da seção 2.
+
+  Recomendações:
+    - Commitar a Etapa 4 assim que o usuário solicitar
+    - Na Etapa 5, criar css/ e js/ em wwwroot e substituir o layout padrão
+    - Antes da Etapa 11, instalar PostgreSQL local ou Docker para validar o
+      runtime (login completo, seed e navegação)
+
+================================================================================
+ FIM DO DIAGNÓSTICO
+================================================================================
