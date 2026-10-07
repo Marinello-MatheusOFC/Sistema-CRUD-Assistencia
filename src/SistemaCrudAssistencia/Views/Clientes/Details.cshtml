@@ -1,0 +1,122 @@
+@using SistemaCrudAssistencia.Models.Extensions
+@using SistemaCrudAssistencia.Models.Validations
+@model ClienteDetailsViewModel
+@{
+    ViewData["Title"] = "Detalhes do Cliente";
+    var cliente = Model.Cliente;
+}
+
+<section aria-labelledby="cliente-title">
+    @if (TempData["Sucesso"] is string sucesso)
+    {
+        <div class="alert alert-success" role="status">@sucesso</div>
+    }
+
+    <div class="page-heading page-heading-actions">
+        <div>
+            <p class="eyebrow">Ficha do cliente</p>
+            <h1 id="cliente-title">@cliente.NomeCompleto</h1>
+            <p class="page-subtitle">Cadastro desde @cliente.DataCadastro.ToString("dd/MM/yyyy").</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@cliente.Id">Editar cliente</a>
+            @if (cliente.Ativo)
+            {
+                <details class="inline-confirmation">
+                    <summary class="btn btn-outline-danger">Desativar</summary>
+                    <div class="confirmation-panel">
+                        <p>O cliente não será excluído e seu histórico será preservado.</p>
+                        <form asp-action="Desativar" asp-route-id="@cliente.Id" method="post">
+                            <button class="btn btn-danger" type="submit">Confirmar desativação</button>
+                        </form>
+                    </div>
+                </details>
+            }
+            else
+            {
+                <form asp-action="Reativar" asp-route-id="@cliente.Id" method="post">
+                    <button class="btn btn-success" type="submit">Reativar</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    @if (!cliente.Ativo)
+    {
+        <div class="alert alert-secondary" role="status"><strong>Cliente inativo.</strong> O histórico continua disponível para consulta.</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header"><h2 class="h5 mb-0">Dados para atendimento</h2></div>
+        <div class="card-body">
+            <dl class="details-grid mb-0">
+                <div><dt>CPF</dt><dd>@Cpf.Formatar(cliente.Cpf)</dd></div>
+                <div><dt>Telefone</dt><dd>@Telefone.Formatar(cliente.Telefone)</dd></div>
+                <div><dt>E-mail</dt><dd>@(cliente.Email ?? "Não informado")</dd></div>
+                <div><dt>Situação</dt><dd><span class="badge @(cliente.Ativo ? "text-bg-success" : "text-bg-secondary")">@(cliente.Ativo ? "Ativo" : "Inativo")</span></dd></div>
+                <div class="details-grid-wide"><dt>Endereço</dt><dd>@cliente.Logradouro, @(cliente.Numero ?? "s/n")@(!string.IsNullOrWhiteSpace(cliente.Complemento) ? $" - {cliente.Complemento}" : string.Empty), @cliente.Bairro - @cliente.Cidade/@cliente.Estado, CEP @Cep.Formatar(cliente.Cep)</dd></div>
+            </dl>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-5">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                    <h2 class="h5 mb-0">Aparelhos do cliente</h2>
+                    <a class="btn btn-sm btn-primary" asp-controller="Aparelhos" asp-action="Create" asp-route-clienteId="@cliente.Id">+ Novo aparelho</a>
+                </div>
+                @if (cliente.Aparelhos.Count == 0)
+                {
+                    <div class="card-body text-muted">Nenhum aparelho cadastrado.</div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var aparelho in cliente.Aparelhos.OrderBy(a => a.TipoAparelho).ThenBy(a => a.Marca))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <strong>@aparelho.Descricao</strong>
+                                    <span class="d-block text-muted small">@aparelho.TipoAparelho</span>
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Aparelhos" asp-action="Details" asp-route-id="@aparelho.Id">Detalhes</a>
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="Aparelhos" asp-action="Edit" asp-route-id="@aparelho.Id">Editar</a>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+        <div class="col-12 col-xl-7">
+            <div class="card h-100">
+                <div class="card-header"><h2 class="h5 mb-0">Histórico de Ordens de Serviço</h2></div>
+                @if (cliente.OrdensServico.Count == 0)
+                {
+                    <div class="card-body text-muted">Nenhuma ordem de serviço registrada.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover client-table mb-0">
+                            <thead><tr><th>OS</th><th>Aparelho</th><th>Entrada</th><th>Status</th></tr></thead>
+                            <tbody>
+                            @foreach (var ordem in cliente.OrdensServico.OrderByDescending(o => o.DataEntrada))
+                            {
+                                <tr>
+                                    <td data-label="OS">@ordem.NumeroOS</td>
+                                    <td data-label="Aparelho">@ordem.DescricaoAparelho</td>
+                                    <td data-label="Entrada">@ordem.DataEntrada.ToString("dd/MM/yyyy")</td>
+                                    <td data-label="Status"><span class="badge @ordem.Status.BadgeCss()">@ordem.Status.Descricao()</span></td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>

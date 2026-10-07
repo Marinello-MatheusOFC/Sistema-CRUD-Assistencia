@@ -1,0 +1,119 @@
+﻿@using SistemaCrudAssistencia.Models.Extensions
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<section class="dashboard-container" aria-labelledby="dashboard-title">
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">Visão geral</p>
+            <h1 id="dashboard-title">Dashboard</h1>
+            <p class="page-subtitle">Acompanhe as ordens de serviço que exigem atenção.</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-lg">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="dashboard-card-label">OS abertas</div>
+                    <div class="dashboard-card-value">@Model.Abertas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="dashboard-card-label">Em análise</div>
+                    <div class="dashboard-card-value">@Model.EmAnalise</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="dashboard-card-label">Aguardando peça</div>
+                    <div class="dashboard-card-value">@Model.AguardandoPeca</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <div class="dashboard-card-label">Em reparo</div>
+                    <div class="dashboard-card-value">@Model.EmReparo</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg">
+            <div class="card dashboard-card h-100 dashboard-card-highlight">
+                <div class="card-body">
+                    <div class="dashboard-card-label">Prontas para retirada</div>
+                    <div class="dashboard-card-value">@Model.ProntasParaRetirada</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="card quick-actions-card h-100">
+                <div class="card-body">
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                        <div>
+                            <h2 class="h5 mb-1">Ações rápidas</h2>
+                            <p class="mb-0 text-muted">Cadastre clientes e acompanhe os atendimentos.</p>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-primary" type="button" disabled>+ Nova Ordem de Serviço</button>
+                            <a class="btn btn-outline-secondary" asp-controller="Clientes" asp-action="Create">Novo Cliente</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Últimas Ordens de Serviço</h5>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.UltimasOrdens.Count == 0)
+            {
+                <div class="p-4 text-center text-muted">Nenhuma ordem de serviço encontrada.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Número da OS</th>
+                                <th>Cliente</th>
+                                <th>Aparelho</th>
+                                <th>Data de entrada</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var os in Model.UltimasOrdens)
+                            {
+                                <tr>
+                                    <td data-label="Número da OS">@os.NumeroOS</td>
+                                    <td data-label="Cliente">@os.Cliente?.NomeCompleto</td>
+                                    <td data-label="Aparelho">@os.DescricaoAparelho</td>
+                                    <td data-label="Data de entrada">@os.DataEntrada.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td data-label="Status">
+                                        <span class="badge @os.Status.BadgeCss()">@os.Status.Descricao()</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</section>

@@ -1,0 +1,78 @@
+@using SistemaCrudAssistencia.Models.Extensions
+@model AparelhoDetailsViewModel
+@{
+    ViewData["Title"] = "Detalhes do Aparelho";
+    var aparelho = Model.Aparelho;
+    var cliente = aparelho.Cliente!;
+}
+
+<section aria-labelledby="aparelho-title">
+    @if (TempData["Sucesso"] is string sucesso)
+    {
+        <div class="alert alert-success" role="status">@sucesso</div>
+    }
+
+    <div class="page-heading page-heading-actions">
+        <div>
+            <p class="eyebrow">Ficha do aparelho</p>
+            <h1 id="aparelho-title">@aparelho.Descricao</h1>
+            <p class="page-subtitle">Cadastro em @aparelho.DataCadastro.ToString("dd/MM/yyyy").</p>
+        </div>
+        <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@aparelho.Id">Editar aparelho</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h2 class="h5 mb-0">Dados do aparelho</h2></div>
+        <div class="card-body">
+            <dl class="details-grid mb-0">
+                <div><dt>Tipo</dt><dd>@aparelho.TipoAparelho</dd></div>
+                <div><dt>Marca</dt><dd>@aparelho.Marca</dd></div>
+                <div><dt>Modelo</dt><dd>@aparelho.Modelo</dd></div>
+                <div><dt>Cor</dt><dd>@(aparelho.Cor ?? "Não informada")</dd></div>
+                <div class="details-grid-wide"><dt>IMEI ou número de série</dt><dd>@(aparelho.ImeiNumeroSerie ?? "Não informado")</dd></div>
+                <div class="details-grid-wide"><dt>Observações</dt><dd>@(aparelho.Observacoes ?? "Nenhuma observação.")</dd></div>
+            </dl>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-4">
+            <div class="card h-100">
+                <div class="card-header"><h2 class="h5 mb-0">Proprietário</h2></div>
+                <div class="card-body">
+                    <p class="fw-semibold mb-1">@cliente.NomeCompleto</p>
+                    <p class="text-muted mb-3">@SistemaCrudAssistencia.Models.Validations.Telefone.Formatar(cliente.Telefone)</p>
+                    <a class="btn btn-outline-secondary" asp-controller="Clientes" asp-action="Details" asp-route-id="@cliente.Id">Ver ficha do cliente</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-8">
+            <div class="card h-100">
+                <div class="card-header"><h2 class="h5 mb-0">Histórico de Ordens de Serviço</h2></div>
+                @if (aparelho.OrdensServico.Count == 0)
+                {
+                    <div class="card-body text-muted">Nenhuma ordem de serviço registrada para este aparelho.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover client-table mb-0">
+                            <thead><tr><th>OS</th><th>Entrada</th><th>Defeito</th><th>Status</th></tr></thead>
+                            <tbody>
+                            @foreach (var ordem in aparelho.OrdensServico.OrderByDescending(o => o.DataEntrada))
+                            {
+                                <tr>
+                                    <td data-label="OS">@ordem.NumeroOS</td>
+                                    <td data-label="Entrada">@ordem.DataEntrada.ToString("dd/MM/yyyy")</td>
+                                    <td data-label="Defeito">@ordem.DefeitoRelatado</td>
+                                    <td data-label="Status"><span class="badge @ordem.Status.BadgeCss()">@ordem.Status.Descricao()</span></td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>

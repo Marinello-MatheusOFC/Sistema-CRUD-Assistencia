@@ -9,6 +9,9 @@ public interface IClienteService
 {
     Task<Cliente?> BuscarPorIdAsync(int id, CancellationToken cancellationToken = default);
 
+    /// <summary>Carrega a ficha do cliente com aparelhos e ordens somente para consulta.</summary>
+    Task<Cliente?> BuscarDetalhesAsync(int id, CancellationToken cancellationToken = default);
+
     /// <summary>Busca pelo CPF já normalizado (somente dígitos).</summary>
     Task<Cliente?> BuscarPorCpfAsync(string? cpf, CancellationToken cancellationToken = default);
 
@@ -28,6 +31,14 @@ public class ClienteService(AppDbContext contexto) : IClienteService
 {
     public Task<Cliente?> BuscarPorIdAsync(int id, CancellationToken cancellationToken = default) =>
         contexto.Clientes.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+    public Task<Cliente?> BuscarDetalhesAsync(int id, CancellationToken cancellationToken = default) =>
+        contexto.Clientes
+            .AsNoTracking()
+            .Include(c => c.Aparelhos)
+            .Include(c => c.OrdensServico)
+                .ThenInclude(o => o.Aparelho)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
     public Task<Cliente?> BuscarPorCpfAsync(string? cpf, CancellationToken cancellationToken = default)
     {
@@ -70,6 +81,13 @@ public class ClienteService(AppDbContext contexto) : IClienteService
         cliente.Telefone = Telefone.Normalizar(cliente.Telefone);
         cliente.Cep = Cep.Normalizar(cliente.Cep);
         cliente.NomeCompleto = cliente.NomeCompleto.Trim();
+        cliente.Email = NormalizarOpcional(cliente.Email);
+        cliente.Logradouro = cliente.Logradouro.Trim();
+        cliente.Numero = NormalizarOpcional(cliente.Numero);
+        cliente.Complemento = NormalizarOpcional(cliente.Complemento);
+        cliente.Bairro = cliente.Bairro.Trim();
+        cliente.Cidade = cliente.Cidade.Trim();
+        cliente.Estado = cliente.Estado.Trim().ToUpperInvariant();
         cliente.DataCadastro = DateTime.Now;
 
         await GarantirCpfLivreAsync(cliente.Cpf, cliente.Id, cancellationToken);

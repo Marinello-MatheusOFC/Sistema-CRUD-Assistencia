@@ -1,0 +1,44 @@
+@model AparelhoFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="TipoAparelho" class="form-label"></label>
+        <input asp-for="TipoAparelho" class="form-control" list="tipos-aparelho" autocomplete="off" />
+        <datalist id="tipos-aparelho">
+            <option value="Celular"></option>
+            <option value="Tablet"></option>
+            <option value="Notebook"></option>
+            <option value="Smartwatch"></option>
+            <option value="Outro"></option>
+        </datalist>
+        <span asp-validation-for="TipoAparelho" class="field-validation-error"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Marca" class="form-label"></label>
+        <input asp-for="Marca" class="form-control" autocomplete="organization" />
+        <span asp-validation-for="Marca" class="field-validation-error"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Modelo" class="form-label"></label>
+        <input asp-for="Modelo" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Modelo" class="field-validation-error"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="ImeiNumeroSerie" class="form-label"></label>
+        <input asp-for="ImeiNumeroSerie" class="form-control" autocomplete="off" />
+        <div class="form-text">Opcional. Informe IMEI ou número de série quando disponível.</div>
+        <span asp-validation-for="ImeiNumeroSerie" class="field-validation-error"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Cor" class="form-label"></label>
+        <input asp-for="Cor" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Cor" class="field-validation-error"></span>
+    </div>
+    <div class="col-12">
+        <label asp-for="Observacoes" class="form-label"></label>
+        <textarea asp-for="Observacoes" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Observacoes" class="field-validation-error"></span>
+    </div>
+</div>

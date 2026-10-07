@@ -1,0 +1,26 @@
+@model ClienteFormViewModel
+@{
+    ViewData["Title"] = "Editar Cliente";
+}
+
+<section class="form-page" aria-labelledby="editar-cliente-title">
+    <div class="page-heading">
+        <p class="eyebrow">Clientes</p>
+        <h1 id="editar-cliente-title">Editar cliente</h1>
+        <p class="page-subtitle">Atualize os dados de contato e endereço.</p>
+    </div>
+
+    <form asp-action="Edit" method="post" class="card">
+        <div class="card-body p-4">
+            <partial name="_Form" model="Model" />
+        </div>
+        <div class="card-footer form-actions">
+            <a class="btn btn-outline-secondary" asp-action="Details">Cancelar</a>
+            <button class="btn btn-primary" type="submit">Salvar alterações</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

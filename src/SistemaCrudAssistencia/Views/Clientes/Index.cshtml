@@ -1,0 +1,82 @@
+@using SistemaCrudAssistencia.Models.Validations
+@model ClientesIndexViewModel
+@{
+    ViewData["Title"] = "Clientes";
+}
+
+<section aria-labelledby="clientes-title">
+    <div class="page-heading page-heading-actions">
+        <div>
+            <p class="eyebrow">Atendimento</p>
+            <h1 id="clientes-title">Clientes</h1>
+            <p class="page-subtitle">Localize, consulte e mantenha os cadastros atualizados.</p>
+        </div>
+        <a class="btn btn-primary" asp-action="Create">+ Novo Cliente</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Pesquisar" method="post" class="search-form">
+                <label for="busca" class="form-label">Pesquisar clientes</label>
+                <div class="input-group">
+                    <input id="busca" name="busca" value="@Model.Busca" class="form-control" type="search" placeholder="Nome, CPF, telefone ou e-mail" autocomplete="off" />
+                    <button class="btn btn-primary" type="submit">Pesquisar</button>
+                </div>
+                <p class="form-text mb-0">CPF pode ser informado com ou sem pontuação.</p>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center gap-3">
+            <h2 class="h5 mb-0">@(string.IsNullOrWhiteSpace(Model.Busca) ? "Clientes cadastrados" : "Resultado da pesquisa")</h2>
+            <span class="text-muted small">@Model.Clientes.Count registro(s)</span>
+        </div>
+        @if (Model.Clientes.Count == 0)
+        {
+            <div class="card-body text-center text-muted py-5">Nenhum cliente encontrado.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover client-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Telefone</th>
+                            <th>CPF</th>
+                            <th>Cidade</th>
+                            <th>Situação</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cliente in Model.Clientes)
+                        {
+                            <tr>
+                                <td data-label="Nome" class="fw-semibold">@cliente.NomeCompleto</td>
+                                <td data-label="Telefone">@Telefone.Formatar(cliente.Telefone)</td>
+                                <td data-label="CPF">@Cpf.Formatar(cliente.Cpf)</td>
+                                <td data-label="Cidade">@cliente.Cidade/@cliente.Estado</td>
+                                <td data-label="Situação">
+                                    @if (cliente.Ativo)
+                                    {
+                                        <span class="badge text-bg-success">Ativo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">Inativo</span>
+                                    }
+                                </td>
+                                <td data-label="Ações" class="text-end text-nowrap">
+                                    <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@cliente.Id">Detalhes</a>
+                                    <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@cliente.Id">Editar</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

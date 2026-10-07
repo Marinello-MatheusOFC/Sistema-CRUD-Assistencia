@@ -1,0 +1,26 @@
+@model ClienteFormViewModel
+@{
+    ViewData["Title"] = "Novo Cliente";
+}
+
+<section class="form-page" aria-labelledby="novo-cliente-title">
+    <div class="page-heading">
+        <p class="eyebrow">Clientes</p>
+        <h1 id="novo-cliente-title">Novo cliente</h1>
+        <p class="page-subtitle">Preencha os dados para iniciar o cadastro.</p>
+    </div>
+
+    <form asp-action="Create" method="post" class="card">
+        <div class="card-body p-4">
+            <partial name="_Form" model="Model" />
+        </div>
+        <div class="card-footer form-actions">
+            <a class="btn btn-outline-secondary" asp-action="Index">Cancelar</a>
+            <button class="btn btn-primary" type="submit">Cadastrar cliente</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

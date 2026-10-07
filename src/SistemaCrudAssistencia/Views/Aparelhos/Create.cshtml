@@ -1,0 +1,26 @@
+@model AparelhoFormViewModel
+@{
+    ViewData["Title"] = "Novo Aparelho";
+}
+
+<section class="form-page" aria-labelledby="novo-aparelho-title">
+    <div class="page-heading">
+        <p class="eyebrow">Clientes</p>
+        <h1 id="novo-aparelho-title">Novo aparelho</h1>
+        <p class="page-subtitle">Cadastre um aparelho para este cliente.</p>
+    </div>
+
+    <form asp-action="Create" asp-route-clienteId="@ViewData["ClienteId"]" method="post" class="card">
+        <div class="card-body p-4">
+            <partial name="_Form" model="Model" />
+        </div>
+        <div class="card-footer form-actions">
+            <a class="btn btn-outline-secondary" asp-controller="Clientes" asp-action="Details" asp-route-id="@ViewData["ClienteId"]">Cancelar</a>
+            <button class="btn btn-primary" type="submit">Cadastrar aparelho</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

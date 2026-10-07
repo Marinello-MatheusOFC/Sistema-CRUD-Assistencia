@@ -8,6 +8,9 @@ public interface IAparelhoService
 {
     Task<Aparelho?> BuscarAsync(int id, CancellationToken cancellationToken = default);
 
+    /// <summary>Carrega a ficha do aparelho com proprietário e histórico de OS para consulta.</summary>
+    Task<Aparelho?> BuscarDetalhesAsync(int id, CancellationToken cancellationToken = default);
+
     Task<List<Aparelho>> ListarPorClienteAsync(int clienteId, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -25,6 +28,13 @@ public class AparelhoService(AppDbContext contexto) : IAparelhoService
 {
     public Task<Aparelho?> BuscarAsync(int id, CancellationToken cancellationToken = default) =>
         contexto.Aparelhos.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+
+    public Task<Aparelho?> BuscarDetalhesAsync(int id, CancellationToken cancellationToken = default) =>
+        contexto.Aparelhos
+            .AsNoTracking()
+            .Include(a => a.Cliente)
+            .Include(a => a.OrdensServico)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
     public Task<List<Aparelho>> ListarPorClienteAsync(int clienteId, CancellationToken cancellationToken = default) =>
         contexto.Aparelhos
@@ -68,7 +78,10 @@ public class AparelhoService(AppDbContext contexto) : IAparelhoService
         var atual = await contexto.Aparelhos.FirstOrDefaultAsync(a => a.Id == aparelho.Id, cancellationToken)
             ?? throw new RegraDeNegocioException("Aparelho não encontrado.");
 
-        if (!await ClienteExisteAsync(aparelho.ClienteId, cancellationToken))
+        // O proprietário é imutável nesta operação, inclusive se a entidade rastreada foi alterada antes da chamada.
+        var clienteIdOriginal = contexto.Entry(atual).Property(a => a.ClienteId).OriginalValue;
+
+        if (!await ClienteExisteAsync(clienteIdOriginal, cancellationToken))
             throw new RegraDeNegocioException("Cliente informado não existe.");
 
         Preparar(aparelho);
@@ -79,6 +92,7 @@ public class AparelhoService(AppDbContext contexto) : IAparelhoService
         atual.ImeiNumeroSerie = aparelho.ImeiNumeroSerie;
         atual.Cor = aparelho.Cor;
         atual.Observacoes = aparelho.Observacoes;
+        atual.ClienteId = clienteIdOriginal;
 
         await contexto.SaveChangesAsync(cancellationToken);
     }

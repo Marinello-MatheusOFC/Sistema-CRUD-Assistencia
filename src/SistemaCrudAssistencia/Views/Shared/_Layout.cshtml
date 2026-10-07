@@ -1,48 +1,89 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@{
+    const string nomeAssistencia = "Assistência Técnica";
+    var controllerAtual = ViewContext.RouteData.Values["controller"]?.ToString();
+    var actionAtual = ViewContext.RouteData.Values["action"]?.ToString();
+    var dashboardAtivo = controllerAtual == "Home" && actionAtual == "Index";
+    var clientesAtivo = controllerAtual == "Clientes";
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SistemaCrudAssistencia</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - @nomeAssistencia</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/SistemaCrudAssistencia.styles.css" asp-append-version="true" />
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">SistemaCrudAssistencia</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+<body class="app-body">
+    <div class="app-shell">
+        <aside class="app-sidebar" id="app-sidebar">
+            <div class="sidebar-brand">
+                <a asp-controller="Home" asp-action="Index" class="brand-link">
+                    <span class="brand-mark" aria-hidden="true">AT</span>
+                    <span>@nomeAssistencia</span>
+                </a>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+            <nav class="sidebar-nav" aria-label="Navegação principal">
+                <a class="sidebar-link @(dashboardAtivo ? "active" : null)" asp-controller="Home" asp-action="Index" aria-current="@(dashboardAtivo ? "page" : null)">
+                    <span>Dashboard</span>
+                </a>
+                <a class="sidebar-link @(clientesAtivo ? "active" : null)" asp-controller="Clientes" asp-action="Index" aria-current="@(clientesAtivo ? "page" : null)">Clientes</a>
+                <span class="sidebar-link disabled" aria-disabled="true">Aparelhos</span>
+                <span class="sidebar-link disabled" aria-disabled="true">Ordens de Serviço</span>
+                <span class="sidebar-link disabled" aria-disabled="true">Busca</span>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-summary">
+                    <span class="user-summary-label">Usuário conectado</span>
+                    <span class="user-summary-name">@User.Identity?.Name</span>
+                </div>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="sidebar-link sidebar-logout">Sair</button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="app-content">
+            <header class="app-topbar">
+                <button class="btn sidebar-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobile-navigation" aria-controls="mobile-navigation" aria-label="Abrir navegação">
+                    <span aria-hidden="true">Menu</span>
+                </button>
+                <span class="topbar-title">@ViewData["Title"]</span>
+            </header>
+
+            <main class="app-main">
             @RenderBody()
-        </main>
+            </main>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - SistemaCrudAssistencia - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobile-navigation" aria-labelledby="mobile-navigation-title">
+        <div class="offcanvas-header">
+            <h2 class="offcanvas-title h5" id="mobile-navigation-title">@nomeAssistencia</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar navegação"></button>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <div class="offcanvas-body d-flex flex-column">
+            <nav class="sidebar-nav" aria-label="Navegação móvel">
+                <a class="sidebar-link @(dashboardAtivo ? "active" : null)" asp-controller="Home" asp-action="Index" aria-current="@(dashboardAtivo ? "page" : null)">Dashboard</a>
+                <a class="sidebar-link @(clientesAtivo ? "active" : null)" asp-controller="Clientes" asp-action="Index" aria-current="@(clientesAtivo ? "page" : null)">Clientes</a>
+                <span class="sidebar-link disabled" aria-disabled="true">Aparelhos</span>
+                <span class="sidebar-link disabled" aria-disabled="true">Ordens de Serviço</span>
+                <span class="sidebar-link disabled" aria-disabled="true">Busca</span>
+            </nav>
+            <div class="sidebar-footer mt-auto">
+                <div class="user-summary">
+                    <span class="user-summary-label">Usuário conectado</span>
+                    <span class="user-summary-name">@User.Identity?.Name</span>
+                </div>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="sidebar-link sidebar-logout">Sair</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
