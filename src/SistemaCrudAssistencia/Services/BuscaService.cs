@@ -14,7 +14,9 @@ public class ResultadoBusca
 
     public List<Cliente> Clientes { get; init; } = [];
 
-    public bool EncontrouAlgo => OrdensServico.Count > 0 || Clientes.Count > 0;
+    public List<Aparelho> Aparelhos { get; init; } = [];
+
+    public bool EncontrouAlgo => OrdensServico.Count > 0 || Clientes.Count > 0 || Aparelhos.Count > 0;
 }
 
 public interface IBuscaService
@@ -25,7 +27,10 @@ public interface IBuscaService
     Task<ResultadoBusca> BuscarAsync(string? termo, CancellationToken cancellationToken = default);
 }
 
-public class BuscaService(IClienteService clientes, IOrdemServicoService ordensServico) : IBuscaService
+public class BuscaService(
+    IClienteService clientes,
+    IOrdemServicoService ordensServico,
+    IAparelhoService aparelhos) : IBuscaService
 {
     public async Task<ResultadoBusca> BuscarAsync(string? termo, CancellationToken cancellationToken = default)
     {
@@ -37,11 +42,19 @@ public class BuscaService(IClienteService clientes, IOrdemServicoService ordensS
         var ordens = await ordensServico.ListarAsync(new FiltroOrdensServico { Busca = busca }, cancellationToken);
         var clientesEncontrados = await clientes.ListarAsync(busca, somenteAtivos: false, cancellationToken);
 
+        // Aparelhos só são localizáveis por IMEI/número de série. Termos muito
+        // curtos criariam coincidência fraca em qualquer série, então exigimos
+        // ao menos 3 caracteres (mesmo piso usado para telefone).
+        List<Aparelho> aparelhosEncontrados = busca.Length >= 3
+            ? await aparelhos.BuscarPorImeiAsync(busca, cancellationToken)
+            : [];
+
         return new ResultadoBusca
         {
             Termo = busca,
             OrdensServico = ordens.Take(25).ToList(),
-            Clientes = clientesEncontrados.Take(10).ToList()
+            Clientes = clientesEncontrados.Take(10).ToList(),
+            Aparelhos = aparelhosEncontrados.Take(10).ToList()
         };
     }
 }

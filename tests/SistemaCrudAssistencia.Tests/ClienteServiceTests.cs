@@ -64,4 +64,20 @@ public class ClienteServiceTests
         Assert.NotNull(reativado);
         Assert.True(reativado.Ativo);
     }
+
+    [Fact]
+    public async Task ListarAsync_PorTelefoneDe11Digitos_EncontraOCliente()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var service = new ClienteService(contexto);
+        var cliente = BancoEmMemoria.NovoCliente();
+        await service.CriarAsync(cliente);
+
+        // Celular BR tem 11 dígitos, igual ao CPF: a busca precisa cobrir os
+        // dois no mesmo ramo, senão o telefone completo não encontra ninguém.
+        var encontrados = await service.ListarAsync("(11) 98765-4321", somenteAtivos: false);
+
+        var unico = Assert.Single(encontrados);
+        Assert.Equal(cliente.Id, unico.Id);
+    }
 }

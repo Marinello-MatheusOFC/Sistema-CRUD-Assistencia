@@ -38,8 +38,8 @@ public static partial class Cpf
         if (cpf.All(c => c == cpf[0]))
             return false;
 
-        return DigitoVerificador(cpf, 9) == cpf[9]
-            && DigitoVerificador(cpf, 10) == cpf[10];
+        return DigitoVerificador(cpf, 9) == cpf[9] - '0'
+            && DigitoVerificador(cpf, 10) == cpf[10] - '0';
     }
 
     /// <summary>

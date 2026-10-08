@@ -1,0 +1,232 @@
+@using SistemaCrudAssistencia.Models.Extensions
+@using SistemaCrudAssistencia.Models.Validations
+@model NovaOrdemServicoViewModel
+@{
+    ViewData["Title"] = "Nova Ordem de Serviço";
+    var etapaCadastro = Model.Cliente is null && Model.CadastroCliente is not null;
+    var etapaCpf = Model.Cliente is null && Model.CadastroCliente is null;
+    var semAparelhos = Model.Cliente is not null && Model.Aparelhos.Count == 0;
+    var usarNovo = Model.CadastrarAparelhoNovo || semAparelhos;
+    var etapa = etapaCpf ? 1 : etapaCadastro ? 2 : 3;
+}
+
+<section class="form-page" aria-labelledby="nova-os-title">
+    <div class="page-heading">
+        <p class="eyebrow">Ordens de Serviço</p>
+        <h1 id="nova-os-title">Nova ordem de serviço</h1>
+        <p class="page-subtitle">Etapa @etapa de 3 — @(etapaCpf ? "identificação do cliente pelo CPF" : etapaCadastro ? "cadastro do cliente novo" : "aparelho, defeito e confirmação").</p>
+    </div>
+
+    @if (Model.Erro is not null)
+    {
+        <div class="alert alert-danger" role="alert">@Model.Erro</div>
+    }
+    @if (Model.Mensagem is not null)
+    {
+        <div class="alert alert-info" role="status">@Model.Mensagem</div>
+    }
+
+    @if (etapaCpf)
+    {
+        @* ---------------- Etapa 1: CPF (POST — nunca vai para a URL) ---------------- *@
+        <form asp-action="LocalizarCliente" method="post" class="card">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-3">Cliente no balcão</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Cpf" class="form-label">CPF do cliente</label>
+                        <input asp-for="Cpf" class="form-control" inputmode="numeric" autocomplete="off"
+                               placeholder="000.000.000-00" autofocus />
+                        <div class="form-text">CPF pode ser informado com ou sem pontuação.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer form-actions">
+                <a class="btn btn-outline-secondary" asp-controller="OrdensServico" asp-action="Index">Cancelar</a>
+                <button class="btn btn-primary" type="submit">Localizar cliente</button>
+            </div>
+        </form>
+    }
+    else if (etapaCadastro)
+    {
+        @* ---------------- Etapa 1b: cadastro do cliente novo, sem sair do fluxo ---------------- *@
+        <div class="alert alert-secondary" role="status">
+            Cliente novo: informe os dados abaixo. Ao finalizar o cadastro você volta
+            automaticamente para a abertura da OS com o CPF já preenchido.
+        </div>
+
+        <form asp-action="CadastrarCliente" method="post" class="card">
+            <div class="card-body p-4">
+                <partial name="~/Views/Clientes/_Form.cshtml" model="Model.CadastroCliente" />
+            </div>
+            <div class="card-footer form-actions">
+                <a class="btn btn-outline-secondary" asp-action="Nova">Voltar e buscar outro CPF</a>
+                <button class="btn btn-primary" type="submit">Cadastrar e continuar</button>
+            </div>
+        </form>
+    }
+    else
+    {
+        @* ---------------- Etapa 2: cliente já identificado — nada de digitar dados de novo ---------------- *@
+        var cliente = Model.Cliente!;
+        <div class="card mb-4">
+            <div class="card-header"><h2 class="h5 mb-0">Cliente identificado</h2></div>
+            <div class="card-body">
+                <dl class="details-grid mb-0">
+                    <div><dt>Nome</dt><dd>@cliente.NomeCompleto</dd></div>
+                    <div><dt>CPF</dt><dd>@Cpf.Formatar(cliente.Cpf)</dd></div>
+                    <div><dt>Telefone</dt><dd>@Telefone.Formatar(cliente.Telefone)</dd></div>
+                    <div><dt>Situação</dt><dd><span class="badge text-bg-success">Ativo</span></dd></div>
+                </dl>
+            </div>
+        </div>
+
+        <form asp-action="Confirmar" method="post" class="card">
+            <input type="hidden" asp-for="ClienteId" />
+
+            <div class="card-body p-4">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <fieldset class="form-section">
+                    <legend>Aparelho</legend>
+
+                    <div class="mb-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="ModoAparelho" id="modo-existente"
+                                   value="existente" checked="@(!usarNovo)" disabled="@semAparelhos" />
+                            <label class="form-check-label" for="modo-existente">Aparelho já cadastrado</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="ModoAparelho" id="modo-novo"
+                                   value="novo" checked="@usarNovo" />
+                            <label class="form-check-label" for="modo-novo">Cadastrar aparelho novo agora</label>
+                        </div>
+                    </div>
+
+                    <div id="selecao-aparelho" class="@(usarNovo ? "d-none" : null)">
+                        @if (semAparelhos)
+                        {
+                            <div class="alert alert-secondary mb-0" role="status">
+                                Este cliente ainda não tem aparelhos cadastrados. Use a opção acima para cadastrar o primeiro.
+                            </div>
+                        }
+                        else
+                        {
+                            <label asp-for="AparelhoId" class="form-label">Aparelho do cliente</label>
+                            <select asp-for="AparelhoId" class="form-select">
+                                <option value="">Selecione o aparelho...</option>
+                                @foreach (var aparelho in Model.Aparelhos)
+                                {
+                                    <option value="@aparelho.Id">
+                                        @aparelho.Descricao — @aparelho.TipoAparelho@(string.IsNullOrWhiteSpace(aparelho.ImeiNumeroSerie) ? string.Empty : $" (S/N {aparelho.ImeiNumeroSerie})")
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="AparelhoId" class="field-validation-error"></span>
+                        }
+                    </div>
+
+                    <div id="cadastro-aparelho" class="@(!usarNovo ? "d-none" : null)">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="NovoAparelho.TipoAparelho" class="form-label"></label>
+                                <input asp-for="NovoAparelho.TipoAparelho" class="form-control" list="tipos-aparelho-os" autocomplete="off" />
+                                <datalist id="tipos-aparelho-os">
+                                    <option value="Celular"></option>
+                                    <option value="Tablet"></option>
+                                    <option value="Notebook"></option>
+                                    <option value="Smartwatch"></option>
+                                    <option value="Outro"></option>
+                                </datalist>
+                                <span asp-validation-for="NovoAparelho.TipoAparelho" class="field-validation-error"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="NovoAparelho.Marca" class="form-label"></label>
+                                <input asp-for="NovoAparelho.Marca" class="form-control" autocomplete="off" />
+                                <span asp-validation-for="NovoAparelho.Marca" class="field-validation-error"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="NovoAparelho.Modelo" class="form-label"></label>
+                                <input asp-for="NovoAparelho.Modelo" class="form-control" autocomplete="off" />
+                                <span asp-validation-for="NovoAparelho.Modelo" class="field-validation-error"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="NovoAparelho.ImeiNumeroSerie" class="form-label"></label>
+                                <input asp-for="NovoAparelho.ImeiNumeroSerie" class="form-control" autocomplete="off" />
+                                <div class="form-text">Opcional. Informe IMEI ou número de série quando disponível.</div>
+                                <span asp-validation-for="NovoAparelho.ImeiNumeroSerie" class="field-validation-error"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="NovoAparelho.Cor" class="form-label"></label>
+                                <input asp-for="NovoAparelho.Cor" class="form-control" autocomplete="off" />
+                                <span asp-validation-for="NovoAparelho.Cor" class="field-validation-error"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="NovoAparelho.Observacoes" class="form-label"></label>
+                                <textarea asp-for="NovoAparelho.Observacoes" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="NovoAparelho.Observacoes" class="field-validation-error"></span>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="form-section">
+                    <legend>Entrada do aparelho</legend>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="DefeitoRelatado" class="form-label"></label>
+                            <textarea asp-for="DefeitoRelatado" class="form-control" rows="3"
+                                      placeholder="Descreva o defeito relatado pelo cliente"></textarea>
+                            <span asp-validation-for="DefeitoRelatado" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EstadoFisicoEntrada" class="form-label"></label>
+                            <textarea asp-for="EstadoFisicoEntrada" class="form-control" rows="2"
+                                      placeholder="Ex.: tela trincada, corpo amassado..."></textarea>
+                            <span asp-validation-for="EstadoFisicoEntrada" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="AcessoriosEntregues" class="form-label"></label>
+                            <textarea asp-for="AcessoriosEntregues" class="form-control" rows="2"
+                                      placeholder="Ex.: capa, carregador, película..."></textarea>
+                            <span asp-validation-for="AcessoriosEntregues" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="ObservacoesEntrada" class="form-label"></label>
+                            <textarea asp-for="ObservacoesEntrada" class="form-control" rows="2"
+                                      placeholder="Observações gerais da entrada"></textarea>
+                            <span asp-validation-for="ObservacoesEntrada" class="field-validation-error"></span>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+
+            <div class="card-footer form-actions">
+                <a class="btn btn-outline-secondary" asp-action="Nova">Cancelar</a>
+                <button class="btn btn-primary" type="submit">Confirmar e abrir OS</button>
+            </div>
+        </form>
+    }
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var secaoSelecao = document.getElementById('selecao-aparelho');
+            var secaoCadastro = document.getElementById('cadastro-aparelho');
+
+            function sincronizar() {
+                var novo = document.getElementById('modo-novo').checked;
+                secaoSelecao.classList.toggle('d-none', novo);
+                secaoCadastro.classList.toggle('d-none', !novo);
+            }
+
+            document.querySelectorAll('input[name="ModoAparelho"]').forEach(function (radio) {
+                radio.addEventListener('change', sincronizar);
+            });
+
+            sincronizar();
+        })();
+    </script>
+}

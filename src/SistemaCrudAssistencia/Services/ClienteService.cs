@@ -62,10 +62,11 @@ public class ClienteService(AppDbContext contexto) : IClienteService
         if (!string.IsNullOrWhiteSpace(termo))
         {
             var digitos = string.Concat(termo.Where(char.IsAsciiDigit));
+            var texto = termo.ToLower();
 
             consulta = termo.Contains('@')
-                ? consulta.Where(c => c.Email != null && ContemTexto(c.Email, termo))
-                : PorCpfOuNome(consulta, digitos, termo);
+                ? consulta.Where(c => c.Email != null && c.Email.ToLower().Contains(texto))
+                : PorCpfOuNome(consulta, digitos, texto);
         }
 
         return consulta
@@ -162,20 +163,20 @@ public class ClienteService(AppDbContext contexto) : IClienteService
             throw new RegraDeNegocioException("Já existe um cliente cadastrado com este CPF.");
     }
 
-    private static IQueryable<Cliente> PorCpfOuNome(IQueryable<Cliente> consulta, string digitos, string termo) =>
+    /// <summary>
+    /// 11 dígitos pode ser CPF ou celular (celular BR também tem 11 dígitos):
+    /// confere os dois, sempre sobre a normalização já existente. O texto já
+    /// chega em minúsculas e a comparação é inline — só assim o EF Core traduz
+    /// para SQL em PostgreSQL e SQLite (nada de método próprio na expressão,
+    /// que o provedor não sabe traduzir, e nada de ILike).
+    /// </summary>
+    private static IQueryable<Cliente> PorCpfOuNome(IQueryable<Cliente> consulta, string digitos, string texto) =>
         digitos.Length switch
         {
-            11 => consulta.Where(c => c.Cpf == digitos),
-            >= 3 => consulta.Where(c => c.Telefone.Contains(digitos) || ContemTexto(c.NomeCompleto, termo)),
-            _ => consulta.Where(c => ContemTexto(c.NomeCompleto, termo))
+            11 => consulta.Where(c => c.Cpf == digitos || c.Telefone.Contains(digitos)),
+            >= 3 => consulta.Where(c => c.Telefone.Contains(digitos) || c.NomeCompleto.ToLower().Contains(texto)),
+            _ => consulta.Where(c => c.NomeCompleto.ToLower().Contains(texto))
         };
-
-    /// <summary>
-    /// "Contém texto" sem diferenciar maiúsculas de minúsculas, traduzido para SQL
-    /// em PostgreSQL e SQLite (nada de ILike, que é específico do PostgreSQL).
-    /// </summary>
-    private static bool ContemTexto(string coluna, string termo) =>
-        coluna.ToLower().Contains(termo.ToLower());
 
     private static string? NormalizarOpcional(string? valor)
     {

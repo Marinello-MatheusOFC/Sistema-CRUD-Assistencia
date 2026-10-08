@@ -1,0 +1,165 @@
+@using SistemaCrudAssistencia.Models.Extensions
+@using SistemaCrudAssistencia.Models.Validations
+@using SistemaCrudAssistencia.Services
+@model ResultadoBusca
+@{
+    ViewData["Title"] = "Busca";
+    var buscaRealizada = Model.Termo.Length > 0;
+}
+
+<section aria-labelledby="busca-title">
+    <div class="page-heading">
+        <p class="eyebrow">Atendimento</p>
+        <h1 id="busca-title">Busca</h1>
+        <p class="page-subtitle">Localize em um só lugar: número da OS, cliente, aparelho, status, telefone ou IMEI.</p>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Pesquisar" method="post" class="search-form">
+                <label for="termo" class="form-label">Buscar</label>
+                <div class="input-group">
+                    <input id="termo" name="termo" value="@Model.Termo" class="form-control" type="search"
+                           placeholder="Nº da OS, nome, CPF, telefone ou IMEI" autocomplete="off" autofocus />
+                    <button class="btn btn-primary" type="submit">Buscar</button>
+                </div>
+                <p class="form-text mb-0">CPF, telefone e IMEI são enviados por POST e não ficam na URL.</p>
+            </form>
+        </div>
+    </div>
+
+    @if (!buscaRealizada)
+    {
+        <div class="card">
+            <div class="card-body text-center text-muted py-5">Digite um termo acima para pesquisar.</div>
+        </div>
+    }
+    else if (!Model.EncontrouAlgo)
+    {
+        <div class="card">
+            <div class="card-body text-center text-muted py-5">Nenhum resultado encontrado.</div>
+        </div>
+    }
+    else
+    {
+        @if (Model.OrdensServico.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center gap-3">
+                    <h2 class="h5 mb-0">Ordens de serviço</h2>
+                    <span class="text-muted small">@Model.OrdensServico.Count registro(s)</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>OS</th>
+                                <th>Cliente</th>
+                                <th>Aparelho</th>
+                                <th>Status</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ordem in Model.OrdensServico)
+                            {
+                                <tr>
+                                    <td data-label="OS" class="fw-semibold">@ordem.NumeroOS</td>
+                                    <td data-label="Cliente">@ordem.Cliente?.NomeCompleto</td>
+                                    <td data-label="Aparelho">@ordem.Aparelho?.Descricao</td>
+                                    <td data-label="Status">
+                                        <span class="badge @ordem.Status.BadgeCss()">@ordem.Status.Descricao()</span>
+                                    </td>
+                                    <td data-label="Ações" class="text-end text-nowrap">
+                                        <a class="btn btn-sm btn-outline-secondary" asp-controller="OrdensServico" asp-action="Details" asp-route-id="@ordem.Id">Ver OS</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @if (Model.Clientes.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center gap-3">
+                    <h2 class="h5 mb-0">Clientes</h2>
+                    <span class="text-muted small">@Model.Clientes.Count registro(s)</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover client-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Situação</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cliente in Model.Clientes)
+                            {
+                                <tr>
+                                    <td data-label="Nome" class="fw-semibold">@cliente.NomeCompleto</td>
+                                    <td data-label="Telefone">@Telefone.Formatar(cliente.Telefone)</td>
+                                    <td data-label="Situação">
+                                        @if (cliente.Ativo)
+                                        {
+                                            <span class="badge text-bg-success">Ativo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-secondary">Inativo</span>
+                                        }
+                                    </td>
+                                    <td data-label="Ações" class="text-end text-nowrap">
+                                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Clientes" asp-action="Details" asp-route-id="@cliente.Id">Ver cliente</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @if (Model.Aparelhos.Count > 0)
+        {
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center gap-3">
+                    <h2 class="h5 mb-0">Aparelhos</h2>
+                    <span class="text-muted small">@Model.Aparelhos.Count registro(s)</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Aparelho</th>
+                                <th>Tipo</th>
+                                <th>Cliente</th>
+                                <th>IMEI/Série</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var aparelho in Model.Aparelhos)
+                            {
+                                <tr>
+                                    <td data-label="Aparelho" class="fw-semibold">@aparelho.Descricao</td>
+                                    <td data-label="Tipo">@aparelho.TipoAparelho</td>
+                                    <td data-label="Cliente">@aparelho.Cliente?.NomeCompleto</td>
+                                    <td data-label="IMEI/Série">@(aparelho.ImeiNumeroSerie ?? "—")</td>
+                                    <td data-label="Ações" class="text-end text-nowrap">
+                                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Aparelhos" asp-action="Details" asp-route-id="@aparelho.Id">Ver aparelho</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+</section>

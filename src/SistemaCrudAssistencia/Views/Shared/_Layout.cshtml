@@ -1,9 +1,14 @@
-﻿@{
-    const string nomeAssistencia = "Assistência Técnica";
+﻿@using SistemaCrudAssistencia.Models
+@{
+    // Nome centralizado em Models/Aplicacao.cs — nenhuma cópia local da string.
+    var nomeAssistencia = Aplicacao.NomeAssistencia;
     var controllerAtual = ViewContext.RouteData.Values["controller"]?.ToString();
     var actionAtual = ViewContext.RouteData.Values["action"]?.ToString();
     var dashboardAtivo = controllerAtual == "Home" && actionAtual == "Index";
     var clientesAtivo = controllerAtual == "Clientes";
+    var ordensAtivo = controllerAtual == "OrdensServico" && actionAtual != "Nova";
+    var novaOsAtiva = controllerAtual == "OrdensServico" && actionAtual == "Nova";
+    var buscaAtiva = controllerAtual == "Busca";
 }
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -30,8 +35,9 @@
                 </a>
                 <a class="sidebar-link @(clientesAtivo ? "active" : null)" asp-controller="Clientes" asp-action="Index" aria-current="@(clientesAtivo ? "page" : null)">Clientes</a>
                 <span class="sidebar-link disabled" aria-disabled="true">Aparelhos</span>
-                <span class="sidebar-link disabled" aria-disabled="true">Ordens de Serviço</span>
-                <span class="sidebar-link disabled" aria-disabled="true">Busca</span>
+                <a class="sidebar-link @(ordensAtivo ? "active" : null)" asp-controller="OrdensServico" asp-action="Index" aria-current="@(ordensAtivo ? "page" : null)">Ordens de Serviço</a>
+                <a class="sidebar-link @(novaOsAtiva ? "active" : null)" asp-controller="OrdensServico" asp-action="Nova" aria-current="@(novaOsAtiva ? "page" : null)">+ Nova Ordem de Serviço</a>
+                <a class="sidebar-link @(buscaAtiva ? "active" : null)" asp-controller="Busca" asp-action="Index" aria-current="@(buscaAtiva ? "page" : null)">Busca</a>
             </nav>
 
             <div class="sidebar-footer">
@@ -69,8 +75,9 @@
                 <a class="sidebar-link @(dashboardAtivo ? "active" : null)" asp-controller="Home" asp-action="Index" aria-current="@(dashboardAtivo ? "page" : null)">Dashboard</a>
                 <a class="sidebar-link @(clientesAtivo ? "active" : null)" asp-controller="Clientes" asp-action="Index" aria-current="@(clientesAtivo ? "page" : null)">Clientes</a>
                 <span class="sidebar-link disabled" aria-disabled="true">Aparelhos</span>
-                <span class="sidebar-link disabled" aria-disabled="true">Ordens de Serviço</span>
-                <span class="sidebar-link disabled" aria-disabled="true">Busca</span>
+                <a class="sidebar-link @(ordensAtivo ? "active" : null)" asp-controller="OrdensServico" asp-action="Index" aria-current="@(ordensAtivo ? "page" : null)">Ordens de Serviço</a>
+                <a class="sidebar-link @(novaOsAtiva ? "active" : null)" asp-controller="OrdensServico" asp-action="Nova" aria-current="@(novaOsAtiva ? "page" : null)">+ Nova Ordem de Serviço</a>
+                <a class="sidebar-link @(buscaAtiva ? "active" : null)" asp-controller="Busca" asp-action="Index" aria-current="@(buscaAtiva ? "page" : null)">Busca</a>
             </nav>
             <div class="sidebar-footer mt-auto">
                 <div class="user-summary">

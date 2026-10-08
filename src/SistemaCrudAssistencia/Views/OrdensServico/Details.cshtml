@@ -1,0 +1,228 @@
+@using SistemaCrudAssistencia.Models.Enums
+@using SistemaCrudAssistencia.Models.Extensions
+@using SistemaCrudAssistencia.Models.Validations
+@model OrdemServicoDetailsViewModel
+@{
+    ViewData["Title"] = $"OS {Model.OrdemServico.NumeroOS}";
+    var ordem = Model.OrdemServico;
+    var emAndamento = ordem.EstaEmAndamento;
+    var podeFinalizar = emAndamento && ordem.Status != StatusOrdemServico.Pronto;
+    var podeRetirar = ordem.Status == StatusOrdemServico.Pronto;
+    var proximos = StatusOrdemServicoExtensions.Todos()
+        .Where(s => s != ordem.Status
+            && s != StatusOrdemServico.Pronto
+            && s != StatusOrdemServico.Entregue
+            && s != StatusOrdemServico.Cancelado)
+        .ToList();
+}
+
+<section aria-labelledby="os-title">
+    @if (TempData["Sucesso"] is string sucesso)
+    {
+        <div class="alert alert-success" role="status">@sucesso</div>
+    }
+    @if (TempData["Erro"] is string erro)
+    {
+        <div class="alert alert-danger" role="alert">@erro</div>
+    }
+    @if (TempData["Aviso"] is string aviso)
+    {
+        <div class="alert alert-warning" role="status">@aviso</div>
+    }
+
+    <div class="page-heading page-heading-actions">
+        <div>
+            <p class="eyebrow">Ordem de serviço</p>
+            <h1 id="os-title">@ordem.NumeroOS</h1>
+            <p class="page-subtitle">
+                Entrada em @ordem.DataEntrada.ToString("dd/MM/yyyy HH:mm")
+                &middot; @ordem.Cliente?.NomeCompleto
+                &middot; @ordem.DescricaoAparelho
+            </p>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="badge @ordem.Status.BadgeCss() fs-6">@ordem.Status.Descricao()</span>
+            <a class="btn btn-outline-secondary" asp-action="Imprimir" asp-route-id="@ordem.Id">Imprimir OS</a>
+            @if (emAndamento)
+            {
+                <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@ordem.Id">Editar OS</a>
+            }
+            @if (podeFinalizar)
+            {
+                <details class="inline-confirmation">
+                    <summary class="btn btn-success">Finalizar reparo</summary>
+                    <div class="confirmation-panel">
+                        <form asp-action="Finalizar" asp-route-id="@ordem.Id" method="post">
+                            <label class="form-label" for="obs-finalizar">Observação (opcional)</label>
+                            <input class="form-control" id="obs-finalizar" name="observacao" autocomplete="off" />
+                            <p class="small text-muted mb-2">Move a OS para <strong>Pronto</strong> e agenda a retirada.</p>
+                            <button class="btn btn-success" type="submit">Confirmar finalização</button>
+                        </form>
+                    </div>
+                </details>
+            }
+            @if (podeRetirar)
+            {
+                <details class="inline-confirmation">
+                    <summary class="btn btn-dark">Registrar retirada</summary>
+                    <div class="confirmation-panel">
+                        <form asp-action="RegistrarRetirada" asp-route-id="@ordem.Id" method="post">
+                            <label class="form-label" for="obs-retirada">Observação (opcional)</label>
+                            <input class="form-control" id="obs-retirada" name="observacao" autocomplete="off" />
+                            <p class="small text-muted mb-2">Move a OS de <strong>Pronto</strong> para <strong>Entregue</strong>.</p>
+                            <button class="btn btn-dark" type="submit">Confirmar retirada</button>
+                        </form>
+                    </div>
+                </details>
+            }
+            @if (emAndamento)
+            {
+                <details class="inline-confirmation">
+                    <summary class="btn btn-outline-danger">Cancelar OS</summary>
+                    <div class="confirmation-panel">
+                        <p>A OS será movida para <strong>Cancelado</strong>. Esta é uma situação terminal.</p>
+                        <form asp-action="Cancelar" asp-route-id="@ordem.Id" method="post">
+                            <button class="btn btn-danger" type="submit">Confirmar cancelamento</button>
+                        </form>
+                    </div>
+                </details>
+            }
+        </div>
+    </div>
+
+    @if (!emAndamento)
+    {
+        <div class="alert alert-secondary" role="status">
+            <strong>OS @ordem.Status.Descricao().ToLowerInvariant().</strong>
+            Esta é uma situação terminal: a OS não aceita mais alterações.
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-6">
+            <div class="card h-100">
+                <div class="card-header"><h2 class="h5 mb-0">Entrada do aparelho</h2></div>
+                <div class="card-body">
+                    <dl class="details-grid">
+                        <div><dt>Defeito relatado</dt><dd>@ordem.DefeitoRelatado</dd></div>
+                        <div><dt>Estado físico</dt><dd>@(ordem.EstadoFisicoEntrada ?? "Não informado")</dd></div>
+                        <div><dt>Acessórios</dt><dd>@(ordem.AcessoriosEntregues ?? "Nenhum")</dd></div>
+                        <div><dt>Observações</dt><dd>@(ordem.ObservacoesEntrada ?? "Nenhuma")</dd></div>
+                    </dl>
+                    <hr />
+                    <dl class="details-grid mb-0">
+                        <div>
+                            <dt>Cliente</dt>
+                            <dd>
+                                <a asp-controller="Clientes" asp-action="Details" asp-route-id="@ordem.ClienteId">
+                                    @ordem.Cliente?.NomeCompleto
+                                </a>
+                            </dd>
+                        </div>
+                        <div><dt>CPF</dt><dd>@Cpf.Formatar(ordem.Cliente?.Cpf)</dd></div>
+                        <div><dt>Telefone</dt><dd>@Telefone.Formatar(ordem.Cliente?.Telefone)</dd></div>
+                        <div>
+                            <dt>Aparelho</dt>
+                            <dd>
+                                <a asp-controller="Aparelhos" asp-action="Details" asp-route-id="@ordem.AparelhoId">
+                                    @ordem.DescricaoAparelho
+                                </a>
+                                @(ordem.Aparelho is { ImeiNumeroSerie: { } imei } ? $"(S/N {imei})" : string.Empty)
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+            <div class="card h-100">
+                <div class="card-header"><h2 class="h5 mb-0">Diagnóstico e serviço</h2></div>
+                <div class="card-body">
+                    <dl class="details-grid">
+                        <div class="details-grid-wide"><dt>Diagnóstico técnico</dt><dd>@(ordem.DiagnosticoTecnico ?? "Ainda não informado.")</dd></div>
+                        <div class="details-grid-wide"><dt>Serviço realizado</dt><dd>@(ordem.ServicoRealizado ?? "Ainda não informado.")</dd></div>
+                        <div class="details-grid-wide"><dt>Peças utilizadas</dt><dd>@(ordem.PecasUtilizadas ?? "Nenhuma.")</dd></div>
+                        <div class="details-grid-wide"><dt>Observações internas</dt><dd>@(ordem.ObservacoesInternas ?? "Nenhuma.")</dd></div>
+                    </dl>
+                    <hr />
+                    <dl class="details-grid mb-0">
+                        <div><dt>Valor de peças</dt><dd>@ValoresMonetarios.Formatar(ordem.ValorPecas)</dd></div>
+                        <div><dt>Mão de obra</dt><dd>@ValoresMonetarios.Formatar(ordem.ValorMaoDeObra)</dd></div>
+                        <div><dt><strong>Valor total</strong></dt><dd><strong>@ValoresMonetarios.Formatar(ordem.ValorTotal)</strong></dd></div>
+                        <div>
+                            <dt>Conclusão</dt>
+                            <dd>@(ordem.DataConclusao?.ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+                        </div>
+                        <div>
+                            <dt>Retirada</dt>
+                            <dd>@(ordem.DataRetirada?.ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (emAndamento && proximos.Count > 0)
+    {
+        <div class="card mt-4">
+            <div class="card-header"><h2 class="h5 mb-0">Alterar status</h2></div>
+            <div class="card-body">
+                <form asp-action="AlterarStatus" asp-route-id="@ordem.Id" method="post" class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label" for="novo-status">Novo status</label>
+                        <select class="form-select" id="novo-status" name="novoStatus">
+                            @foreach (var status in proximos)
+                            {
+                                <option value="@status">@status.Descricao()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label" for="observacao-status">Observação (opcional)</label>
+                        <input class="form-control" id="observacao-status" name="observacao" autocomplete="off" />
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" type="submit">Alterar</button>
+                    </div>
+                </form>
+                <p class="form-text mb-0 mt-2">Toda alteração de status gera um registro no histórico com o usuário autenticado.</p>
+            </div>
+        </div>
+    }
+
+    <div class="card mt-4">
+        <div class="card-header"><h2 class="h5 mb-0">Histórico</h2></div>
+        @if (ordem.Historico.Count == 0)
+        {
+            <div class="card-body text-muted">Nenhum evento registrado.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover client-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Movimentação</th>
+                            <th>Observação</th>
+                            <th>Usuário</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var evento in ordem.Historico)
+                    {
+                        <tr>
+                            <td data-label="Data">@evento.Data.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td data-label="Movimentação">@evento.Descricao</td>
+                            <td data-label="Observação">@(evento.Observacao ?? "—")</td>
+                            <td data-label="Usuário">@(evento.Usuario ?? "—")</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

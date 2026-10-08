@@ -1,0 +1,101 @@
+@model OrdemServicoFormViewModel
+@{
+    ViewData["Title"] = $"Editar OS {Model.Id}";
+}
+
+<section class="form-page" aria-labelledby="editar-os-title">
+    <div class="page-heading">
+        <p class="eyebrow">Ordens de Serviço</p>
+        <h1 id="editar-os-title">Editar atendimento</h1>
+        <p class="page-subtitle">
+            Número da OS, datas, status e valor total são de responsabilidade do servidor —
+            aqui você edita apenas diagnóstico, serviço, peças e valores de entrada.
+        </p>
+    </div>
+
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="card">
+        <div class="card-body p-4">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <fieldset class="form-section">
+                <legend>Entrada do aparelho</legend>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="DefeitoRelatado" class="form-label"></label>
+                        <textarea asp-for="DefeitoRelatado" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="DefeitoRelatado" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="EstadoFisicoEntrada" class="form-label"></label>
+                        <textarea asp-for="EstadoFisicoEntrada" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="EstadoFisicoEntrada" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="AcessoriosEntregues" class="form-label"></label>
+                        <textarea asp-for="AcessoriosEntregues" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="AcessoriosEntregues" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="ObservacoesEntrada" class="form-label"></label>
+                        <textarea asp-for="ObservacoesEntrada" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="ObservacoesEntrada" class="field-validation-error"></span>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+                <legend>Diagnóstico e serviço</legend>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="DiagnosticoTecnico" class="form-label"></label>
+                        <textarea asp-for="DiagnosticoTecnico" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="DiagnosticoTecnico" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="ServicoRealizado" class="form-label"></label>
+                        <textarea asp-for="ServicoRealizado" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="ServicoRealizado" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="PecasUtilizadas" class="form-label"></label>
+                        <textarea asp-for="PecasUtilizadas" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="PecasUtilizadas" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="ObservacoesInternas" class="form-label"></label>
+                        <textarea asp-for="ObservacoesInternas" class="form-control" rows="2"></textarea>
+                        <div class="form-text">Visível apenas para a equipe.</div>
+                        <span asp-validation-for="ObservacoesInternas" class="field-validation-error"></span>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+                <legend>Valores</legend>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="ValorPecas" class="form-label"></label>
+                        <input asp-for="ValorPecas" class="form-control" inputmode="decimal" autocomplete="off" />
+                        <span asp-validation-for="ValorPecas" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ValorMaoDeObra" class="form-label"></label>
+                        <input asp-for="ValorMaoDeObra" class="form-control" inputmode="decimal" autocomplete="off" />
+                        <span asp-validation-for="ValorMaoDeObra" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-text">Aceita formatos como 1.500,50 ou 150.50. O valor total é sempre recalculado no servidor.</div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div class="card-footer form-actions">
+            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancelar</a>
+            <button class="btn btn-primary" type="submit">Salvar alterações</button>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

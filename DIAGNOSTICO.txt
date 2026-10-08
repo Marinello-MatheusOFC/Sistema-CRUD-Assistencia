@@ -1,202 +1,265 @@
 ================================================================================
  DIAGNÓSTICO COMPLETO - Sistema-CRUD-Assistencia
- Data: 06/10/2026
+ Data: 07/10/2026
 ================================================================================
 
-SITUAÇÃO ATUAL: Etapas 1, 2, 3 e 4 CONCLUÍDAS. Etapas 5 a 11 PENDENTES.
+SITUAÇÃO REAL: Etapas 1 a 11 CONCLUÍDAS. Esta é a etapa final (11 —
+Finalização: README, Docker, documentação e revisões).
 Build ............ 0 erros, 0 avisos
-Testes ........... 1 aprovado, 0 falhas
-Alterações ....... todas no working tree, NÃO commitadas (commit só se pedido)
+Testes ........... 137 aprovados, 0 falhas, 0 ignorados (execução real)
+Repositório ...... HEAD = 607e5ad = origin/main; working tree com as
+                   Etapas 8 a 11 NÃO commitadas (por regra da etapa,
+                   nenhum add/commit/push foi executado)
 
 
 --------------------------------------------------------------------------------
-1. O QUE FOI FEITO ATÉ AGORA
+1. SITUAÇÃO DO REPOSITÓRIO (estado real verificado por git)
 --------------------------------------------------------------------------------
 
-1.1 ETAPA 1 A 3 (já concluídas em sessões anteriores)
-  - Solução .NET 10 (SistemaCrudAssistencia.slnx) com projeto Web + projeto de
-    testes xUnit
-  - Entidades: Cliente, Aparelho, OrdemServico, HistoricoOrdemServico, Usuario
-    (herda IdentityUser), sem acoplamento a EF Core
-  - Banco: AppDbContext, 5 configurations, migration InitialCreate,
-    13 índices, relacionamentos com FK e DeleteBehavior correto
-  - Services: ClienteService, AparelhoService, OrdemServicoService,
-    BuscaService, DashboardService, ViaCepService, SeedExecutor
-  - Validações server-side: CPF, Telefone, CEP, valores monetários
-  - Program.cs: Identity (senha forte + lockout 10/10min), cookie 8h seguro,
-    FallbackPolicy (tudo exige login), antiforgery global, pt-BR,
-    erro global em /Account/Error e status HTTP em /Account/HttpStatus
-  - Seed: primeiro usuário administrador criado por variáveis de ambiente
-    (ADMIN_EMAIL / ADMIN_PASSWORD) — sem cadastro público
+  Commits, do mais antigo ao mais recente:
+    b6785bb  Initial commit
+    5b89de4  1
+    81f21ab  2
+    ad7cd8d  1
+    607e5ad  1   <== HEAD (main) = origin/main
 
-1.2 ETAPA 4 - AUTENTICAÇÃO (executada nesta sessão)
-
-  Arquivos criados:
-    Controllers/AccountController.cs
-    Models/ViewModels/LoginViewModel.cs
-    Models/ViewModels/StatusHttpViewModel.cs
-    Models/ViewModels/ErrorViewModel.cs        (movido de Models/)
-    Views/Account/Login.cshtml
-    Views/Account/AcessoNegado.cshtml
-    Views/Account/Error.cshtml
-    Views/Account/HttpStatus.cshtml
-    Views/Account/_ViewStart.cshtml            (usa _LayoutConta)
-    Views/Shared/_LayoutConta.cshtml           (layout simples das telas de conta)
-
-  Arquivos modificados:
-    Views/_ViewImports.cshtml    (namespaces efetivamente necessários)
-    Views/Shared/Error.cshtml    (reescrito em pt-BR)
-
-  Arquivos removidos:
-    Models/ErrorViewModel.cs     (movido para Models/ViewModels/)
-
-  AccountController (pequeno, sem regra de negócio duplicada):
-    - Login GET ........ monta LoginViewModel com returnUrl
-    - Login POST ........ valida ModelState -> SignInManager.PasswordSignInAsync
-                          -> sucesso: redireciona para returnUrl local ou Home
-                          -> lockout: mensagem de conta bloqueada
-                          -> falha: mensagem única "E-mail/usuário ou senha
-                            inválidos." (não revela qual campo falhou)
-    - Logout POST ....... SignOutAsync -> redirect para Login
-    - AcessoNegado ...... página pt-BR para falta de permissão
-    - Error ............. ErrorViewModel com RequestId (Activity/TraceIdentifier)
-    - HttpStatus ........ StatusHttpViewModel.Criar(codigo) com mensagens pt-BR
-                          para 400/401/403/404/405/408/429/500/502/503/504
-
-  Segurança mantida (nada foi enfraquecido):
-    - FallbackPolicy intacta: tudo exige autenticação por padrão
-    - Antiforgery global (AutoValidateAntiforgeryToken) intacta
-    - Cookie: 8h, sliding, HttpOnly, SameSite=Lax, Secure em produção
-    - Lockout: 10 tentativas / 10 minutos, aplicado com lockoutOnFailure:true
-    - HTTPS: UseHsts + UseHttpsRedirection em produção
-    - Senha: somente no Identity (PBKDF2 com salt), nenhuma cópia na aplicação
-    - [AllowAnonymous] apenas nas telas de conta/erro (necessário para evitar
-      loop com FallbackPolicy e com UseStatusCodePagesWithReExecute)
-    - Logout NÃO tem [AllowAnonymous] -> protegido pela FallbackPolicy
-    - returnUrl validada com Url.IsLocalUrl (sem open redirect)
-
-  Recursos que NÃO foram criados (por decisão/explícita):
-    cadastro público, login social, recuperação de senha por e-mail,
-    autenticação de dois fatores.
+  Working tree (git status):
+    - Modificados: arquivos das Etapas 8 a 11 (.env.example, README.md,
+      DIAGNOSTICO.txt, Cpf.cs, BuscaService, ClienteService, views, js e
+      testes alterados nas etapas anteriores).
+    - Não rastreados: controllers/VMs/views/testes das Etapas 8 a 10 e os
+      arquivos novos da Etapa 11 (Dockerfile, docker-compose.yml,
+      .dockerignore).
+  Nada foi stagingado, commitado ou descartado nesta etapa.
 
 
 --------------------------------------------------------------------------------
-2. O QUE FALTA (próximas etapas)
+2. O QUE FOI FEITO (Etapas 1 a 11)
 --------------------------------------------------------------------------------
 
-  Etapa 5  Layout com sidebar + HomeController (Dashboard)
-  Etapa 6  Clientes: listagem, cadastro, edição, detalhes, desativar,
-           histórico + aparelhos
-  Etapa 7  Aparelhos: cadastro, edição, detalhes
-  Etapa 8  Ordens de Serviço: wizard Nova OS, listagem, detalhes, edição,
-           atualização de status, finalização, retirada
-  Etapa 9  Busca rápida unificada + view de impressão + ViaCEP
-  Etapa 10 Testes das regras críticas (CPF duplicado, número da OS, cálculo de
-           valores, mudanças de status, relações, abertura de OS)
-  Etapa 11 README.md, Dockerfile, docker-compose.yml, revisão final de segurança
+  2.1 ETAPAS 1 A 3 — Fundação
+    - Solução .NET 10 (SistemaCrudAssistencia.slnx): projeto Web + testes xUnit
+    - Entidades: Cliente, Aparelho, OrdemServico, HistoricoOrdemServico, Usuario
+      (herda IdentityUser), sem acoplamento a EF Core
+    - Banco: AppDbContext, 5 configurations, migration InitialCreate,
+      índices únicos (CPF, Número OS) e FKs com DeleteBehavior correto
+    - Services: ClienteService, AparelhoService, OrdemServicoService,
+      BuscaService, DashboardService, ViaCepService, SeedExecutor
+    - Validações server-side: CPF, Telefone, CEP, valores monetários
+    - Program.cs: Identity (senha forte + lockout 10/10min), cookie 8h
+      (Secure=Always fora de Development), FallbackPolicy (tudo exige login),
+      antiforgery global, pt-BR, erro global em /Account/Error
+    - Seed: primeiro usuário via ADMIN_EMAIL / ADMIN_PASSWORD (sem cadastro
+      público); dados de exemplo somente em Development
 
-  Itens de auditoria ainda pendentes (pertencem à Etapa 5):
-    - Views/Shared/_Layout.cshtml ainda é o layout padrão, sem sidebar
-    - wwwroot ainda sem pastas css/ e js/
+  2.2 ETAPA 4 — Autenticação
+    - AccountController: Login (GET/POST), Logout (POST), AcessoNegado,
+      Error, HttpStatus — tudo pt-BR, returnUrl apenas local
+
+  2.3 ETAPA 5 — Layout com sidebar + Dashboard
+    - _Layout.cshtml (sidebar, topbar, menu mobile), site.css, site.js,
+      HomeController + DashboardViewModel + DashboardService
+
+  2.4 ETAPA 6 — Clientes
+    - CRUD completo + Pesquisar + Desativar/Reativar; CPF único normalizado;
+      desativação preserva histórico
+
+  2.5 ETAPA 7 — Aparelhos
+    - Create (por clienteId), Edit (proprietário imutável), Details com
+      histórico de OS; sem listagem global (acesso pelos detalhes do cliente)
+
+  2.6 ETAPA 8 — Ordens de Serviço
+    - OrdensServicoController: Index, Pesquisar, Nova (wizard: localizar
+      cliente por CPF -> cadastrar -> aparelho -> defeito -> Confirmar),
+      Details, Edit, AlterarStatus, Finalizar, RegistrarRetirada, Cancelar,
+      Imprimir
+    - Regras mantidas: ValorTotal só calculado no servidor; status só via
+      OrdemServicoService com histórico; usuário do histórico vem da
+      identidade; Pronto -> Entregue; Entregue e Cancelado terminais;
+      toda mutação é POST + antiforgery
+
+  2.7 ETAPA 9 — Busca, impressão e ViaCEP
+    - BuscaController + BuscaService (clientes, aparelhos e OS)
+    - View de impressão da OS (sem observações internas nem histórico)
+    - CepsController consultando ViaCEP (timeout 8s) com fallback de erro
+
+  2.8 ETAPA 10 — Testes das regras críticas
+    - 18 arquivos de teste (79 definições Fact/Theory -> 137 casos)
+    - Bug real corrigido: Cpf.EhValido comparava int com char (sempre false);
+      corrigido para cpf[i] - '0' em Cpf.cs
+    - SQLite em memória com constraints reais (FK, índices únicos)
+
+  2.9 ETAPA 11 — Finalização (ESTA ETAPA)
+    - README.md reescrito (pt-BR): descrição, fluxo, funcionalidades,
+      tecnologias, pré-requisitos, variáveis de ambiente, execução com/sem
+      Docker, testes, seed, migrations, produção, PostgreSQL externo,
+      backup, estrutura e status
+    - Dockerfile multi-stage criado (sdk:10.0 -> aspnet:10.0, cache de
+      restore, publicação Release, usuário não-root USER $APP_UID, porta
+      8080, sem execução de migrations)
+    - docker-compose.yml criado (app + postgres:17-alpine, volume nomeado,
+      healthcheck pg_isready, depends_on saudável, portas só em
+      127.0.0.1, ADMIN_EMAIL/ADMIN_PASSWORD obrigatórios via :?,
+      connection string montada a partir de POSTGRES_PASSWORD com fallback
+      LOCAL/DEV identificado)
+    - .dockerignore criado (contexto mínimo, .env fora da imagem)
+    - .env.example revisado: removidas variáveis obsoletas
+      (EnableEmailConfirmation, Authentication__RequiresConfirmedAccount —
+      não existem no código), removida a menção fixa a um provedor
+      específico, corrigida a descrição do seed e documentadas as variáveis
+      realmente usadas
+    - .gitignore auditado: já exclui .env/.env.* (mantém .env.example),
+      bin/obj e chaves; nenhuma alteração necessária
 
 
 --------------------------------------------------------------------------------
-3. PROBLEMAS ENCONTRADOS
+3. O QUE FALTA (pendências reais — nenhuma bloqueia o uso do sistema)
 --------------------------------------------------------------------------------
 
-  3.1 SDK .NET AUSENTE (resolvido)
-      O SDK não estava instalado na máquina (contrariava o resumo anterior).
-      Sem ele era impossível rodar build/testes.
-      SOLUÇÃO: instalado Microsoft .NET SDK 10.0.401 via winget,
-      com aprovação do usuário.
-
-  3.2 HOMEPAGE INEXISTENTE (pendente até a Etapa 5)
-      O AccountController redireciona após o login para Home/Index, mas o
-      HomeController ainda não foi criado (escopo da Etapa 5).
-      Efeito: até lá, acessar "/" retorna a página HttpStatus "404 — Página não
-      encontrada" (em pt-BR). Nada foi criado fora do escopo para não duplicar
-      trabalho da próxima etapa.
-
-  3.3 WWWROOT SEM css/ E js/ (pendente até a Etapa 5)
-      Views/Shared/_Layout.cshtml referencia ~/css/site.css e ~/js/site.js,
-      que ainda não existem (o navegador ignora, sem erro de build).
-      Enquanto isso, as telas de conta usam _LayoutConta, que depende apenas
-      do Bootstrap local em wwwroot/lib — funciona offline.
-
-  3.4 SEM POSTGRESQL / SEM DOCKER (limitação do ambiente)
-      A aplicação não pode ser executada em runtime nesta máquina.
-      Conforme planejado, NÃO houve mudança de arquitetura por causa disso:
-      build, migrations (DesignTimeDbContextFactory) e testes (SQLite em
-      memória) continuam independentes do PostgreSQL externo.
-
-  3.5 ALTERAÇÕES NÃO COMMITADAS
-      Os arquivos da Etapa 4 estão apenas no working tree. Nenhum commit foi
-      feito porque não foi solicitado.
-
-  3.6 NENHUM ERRO DE CÓDIGO
-      Build e testes passam sem erros e sem warnings evitáveis.
+  - Commit das Etapas 8 a 11: NÃO executado por regra desta etapa
+    (git add/commit/push proibidos). Quem der o próximo passo deve revisar
+    e commitar o working tree.
+  - Validação em runtime do Docker (docker compose config/build/up): não
+    executada — Docker não está instalado nesta máquina. Arquivos validados
+    estaticamente (revisão de caminhos/versões + YAML parse OK via js-yaml).
+  - Testes reais com PostgreSQL (violação UNIQUE de CPF via
+    EhViolacaoDeCpfUnico e comportamento real de FKs): pendentes — sem
+    PostgreSQL no ambiente. Os 137 testes rodam em SQLite em memória.
+  - ForwardedHeaders: não configurado em Program.cs (deliberado — não se
+    altera o pipeline sem validar com o proxy real). Necessário antes de
+    rodar atrás de proxy reverso com HTTPS (documentado no README).
+  - Link "Aparelhos" segue desabilitado na sidebar: não existe listagem
+    global de aparelhos (o controller só tem Create/Edit/Details e o acesso
+    é pelos detalhes do cliente). Criar a listagem seria funcionalidade
+    nova, fora do escopo da Etapa 11.
 
 
 --------------------------------------------------------------------------------
-4. DIAGNÓSTICO TÉCNICO
+4. PROBLEMAS CONHECIDOS / LIMITAÇÕES
 --------------------------------------------------------------------------------
 
-  4.1 ARQUITETURA
+  4.1 AMBIENTE SEM DOCKER/POSTGRESQL (limitação da máquina)
+      Build e testes continuam independentes de Docker e PostgreSQL.
+      Composição pronta para uso onde houver Docker.
+
+  4.2 TRÊS LIMITAÇÕES BENIGNAS DOCUMENTADAS (não são bugs)
+      - Valores negativos: inteiros/decimais aceitam sinal de menos (contrato
+        dos helpers de valores monetários).
+      - TentarConverter aceita "+5" (função de conveniência, não validador).
+      - Remover cliente com aparelho vinculado é bloqueado pelo EF
+        (FK) — comportamento documentado, não refatorado sem bug real.
+
+  4.3 PLACEHOLDER DESIGN-TIME (não é segredo)
+      DesignTimeDbContextFactory.cs tem connection string localhost
+      ("postgres"/"postgres") apenas para gerar migrations sem conexão;
+      nunca é usada em runtime (a aplicação exige ConnectionStrings__Default
+      por variável de ambiente). Varredura geral não encontrou credenciais
+      reais em nenhum arquivo versionado.
+
+  4.4 NENHUM TODO/FIXME/HACK no código do projeto
+      (os ocorrências encontradas são de bibliotecas de terceiros em
+      wwwroot/lib, não alteradas).
+
+  4.5 NENHUM ERRO DE CÓDIGO
+      Restore, build e testes passam sem erros e sem warnings.
+
+
+--------------------------------------------------------------------------------
+5. DIAGNÓSTICO TÉCNICO
+--------------------------------------------------------------------------------
+
+  5.1 ARQUITETURA
       ASP.NET Core MVC puro (SDK Web, net10.0, AddControllersWithViews,
       MapControllerRoute). Sem Razor Pages, Blazor, Minimal APIs, Web API ou SPA.
-      Camadas: Models (entidades/VMs) / Data (EF Core) / Services (regras de
-      negócio) / Controllers (finos) / Views (Razor em pt-BR).
-      Nenhuma migração de arquitetura é necessária.
+      Camadas: Models (entidades/VMs) / Data (EF Core) / Services (regras) /
+      Controllers (finos) / Views (Razor em pt-BR).
+      Controllers: Account, Home, Clientes, Aparelhos, OrdensServico, Busca, Ceps.
 
-  4.2 SEGURANÇA (checklist)
-      [OK] Autenticação: ASP.NET Core Identity (sem autenticação manual)
-      [OK] Senhas: apenas no Identity, hash PBKDF2 + salt
+  5.2 SEGURANÇA (checklist final)
+      [OK] Autenticação: ASP.NET Core Identity (hash PBKDF2 + salt)
       [OK] FallbackPolicy: toda rota exige usuário autenticado
-      [OK] Antiforgery: filtro global em todas as actions POST
-      [OK] Cookies: HttpOnly, SameSite=Lax, Secure em produção, 8h/sliding
+      [OK] Antiforgery: filtro global (AutoValidateAntiforgeryToken)
+      [OK] Cookies: HttpOnly, SameSite=Lax, Secure=Always fora de Development, 8h sliding
       [OK] Lockout: 10 tentativas / 10 minutos, AllowedForNewUsers = true
-      [OK] HTTPS: HSTS + redirecionamento em produção
-      [OK] Credenciais: mensagem de erro genérica, sem vazamento de estado
+      [OK] HTTPS: HSTS + UseHttpsRedirection fora de Development
+      [OK] Erro em produção: página genérica /Account/Error (sem stack trace)
       [OK] returnUrl: apenas URLs locais (sem open redirect)
-      [OK] Sem cadastro público: primeiro usuário via seed (variáveis de ambiente)
-      [OK] Connection string: só por variável de ambiente, nunca em appsettings
-      [OK] Logs: CPF/telefone nunca logados completos (helpers ParaLog)
+      [OK] Sem cadastro público: 1º usuário só pelo seed com ADMIN_EMAIL/ADMIN_PASSWORD
+      [OK] Connection string: só por variável de ambiente (app falha sem ela)
+      [OK] Logs: CPF/telefone/CEP nunca logados; helpers ParaLog existem;
+           e-mail registrado apenas em eventos de autenticação (login/falha/lockout);
+           log de comandos EF em Warning (sem SQL parametrizado nos logs)
+      [OK] appsettings: sem credenciais
+      [OK] .env ignorado pelo git; .env.example sem valores reais
+      [OK] Dockerfile/commitos sem senha de produção: fallback de banco é
+           identificado como LOCAL/DEV; ADMIN_* obrigatórios no compose
+      [OK] Impressão da OS: sem observações internas nem histórico
+           (coberto por ImpressaoTests)
+      [OK] Pendência documentada (não alterada): ForwardedHeaders para proxy
 
-  4.3 BANCO DE DADOS
-      PostgreSQL + Npgsql, migration InitialCreate já criada, migrations
-      automáticas em Development e desligadas em produção.
-      Nada foi alterado nesta etapa.
+  5.3 BANCO DE DADOS
+      PostgreSQL + Npgsql (EF Core 10), migration única InitialCreate,
+      histórico em __migrations_historico.
+      Migrations automáticas: Development sim; Production NÃO
+      (appsettings.Production.json: Aplicacao:AplicarMigrationsAutomaticamente=false,
+      com default no Program.cs ambiente != "Production").
+      Nenhuma migration nova foi criada nas Etapas 5 a 11.
 
-  4.4 TESTES
+  5.4 TESTES (contagem real: dotnet test --no-build)
       SQLite relacional em memória (EnsureCreated) com constraints reais.
-      1 teste: compatibilidade de datas, geração de número de OS (2026-000042),
-      carregamento de relações e histórico.
-      Resultado: 1 aprovado, 0 falhas.
-      Faltam os testes das regras críticas (Etapa 10).
+      Total: 137 aprovados, 0 falhas, 0 ignorados.
+      Por arquivo (definições Fact/Theory):
+        OrdemServicoServiceTests ............ 11   BuscaServiceTests .............. 7
+        TelefoneCepTests ................... 6    OrdemServicoRegrasCriticasTests  6
+        CpfTests ........................... 5    IntegridadeDoBancoTests ......... 5
+        ValoresMonetariosTests ............. 5    AparelhoServiceTests ........... 5
+        ClienteRegrasCriticasTests .......... 4    ClienteServiceTests ............. 4
+        SegurancaTests ...................... 4    ViaCepServiceTests .............. 4
+        ViewModelsSegurosTests .............. 4    CepsControllerTests ............. 3
+        ImpressaoTests ...................... 3    OrdemServicoEntidadeTests ....... 2
+        TesteDeCompatibilidadeSqlite ........ 1    (BancoEmMemoria = suporte)
 
-  4.5 BUILD
-      dotnet build -> 0 erros, 0 avisos (SDK 10.0.401).
+  5.5 BUILD (execução real desta etapa)
+      dotnet build .... 0 erros, 0 avisos (SDK 10.0.401)
+      dotnet test ..... 137 aprovados, 0 falhas, 0 ignorados (--no-build, 8 s)
 
-  4.6 AMBIENTE
-      .NET SDK 10.0.401 .......... instalado nesta sessão (via winget)
-      PostgreSQL ................. ausente
-      Docker ..................... ausente
+  5.6 DOCKER (Etapas 11 — validação estática)
+      Dockerfile ............ multi-stage sdk:10.0 -> aspnet:10.0, caminhos do
+                              projeto conferidos contra o repositório, usuário
+                              não-root, sem migrations no build
+      docker-compose.yml .... YAML válido (parse OK), postgres:17-alpine,
+                              healthcheck, volume, portas 127.0.0.1
+      .dockerignore ......... contexto reduzido; .env nunca entra na imagem
+      Docker em runtime .... NÃO EXECUTADO (docker não instalado)
+
+  5.7 AMBIENTE
+      .NET SDK 10.0.401 .......... instalado
+      Docker ..................... ausente (validação só estática)
+      PostgreSQL ................. ausente (testes usam SQLite)
+      Node.js 24 ................. presente (usado apenas para validar o YAML)
       NuGet ...................... acessível
-      Execução em runtime ........ bloqueada pela ausência do banco
 
 
 --------------------------------------------------------------------------------
-5. PRÓXIMOS PASSOS
+6. PRÓXIMOS PASSOS
 --------------------------------------------------------------------------------
 
-  Imediato: Etapa 5 — Layout com sidebar + HomeController (Dashboard).
-  Depois: Etapas 6 a 11 conforme a lista da seção 2.
+  O sistema está funcional conforme o escopo das 11 etapas. Passos possíveis
+  (fora do escopo já executado):
 
-  Recomendações:
-    - Commitar a Etapa 4 assim que o usuário solicitar
-    - Na Etapa 5, criar css/ e js/ em wwwroot e substituir o layout padrão
-    - Antes da Etapa 11, instalar PostgreSQL local ou Docker para validar o
-      runtime (login completo, seed e navegação)
+  1) Revisar e commitar o working tree (Etapas 8 a 11) — decisão do responsável.
+  2) Em uma máquina com Docker: docker compose config / build / up e
+     validar o acesso em http://localhost:8080 com ADMIN_* definidos no .env.
+  3) Rodar os testes de violação UNIQUE de CPF e de FKs contra PostgreSQL real.
+  4) Antes de produção real: configurar ForwardedHeaders conforme o proxy,
+     aplicar migrations manualmente e manter .env fora do repositório.
+
+  Regras que continuam valendo:
+    - Nenhuma migration nova sem alteração real de modelo
+    - Nada de segurança enfraquecido (HTTPS, cookies, antiforgery, FallbackPolicy)
+    - Sem cadastro público, sem segredos no repositório
+    - Não criar funcionalidades fora do escopo (estoque, financeiro, e-mail,
+      portal do cliente, API, multiempresa etc.)
 
 ================================================================================
  FIM DO DIAGNÓSTICO

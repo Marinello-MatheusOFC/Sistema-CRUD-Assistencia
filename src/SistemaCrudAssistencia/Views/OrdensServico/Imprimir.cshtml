@@ -1,0 +1,280 @@
+@using SistemaCrudAssistencia.Models
+@using SistemaCrudAssistencia.Models.Extensions
+@using SistemaCrudAssistencia.Models.Validations
+@model SistemaCrudAssistencia.Models.Entities.OrdemServico
+@{
+    // Layout nulo: página de impressão fora do app shell. Sem observações
+    // internas e sem histórico — dados que o cliente não deve ver na via
+    // impressa. Impressão pelo próprio navegador (não há geração de PDF).
+    Layout = null;
+    var temValores = Model.ValorPecas > 0 || Model.ValorMaoDeObra > 0 || Model.ValorTotal > 0;
+}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OS @Model.NumeroOS - @Aplicacao.NomeAssistencia</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 24px 16px;
+            background: #f4f4f4;
+            color: #000;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12pt;
+            line-height: 1.45;
+        }
+
+        .acoes {
+            max-width: 210mm;
+            margin: 0 auto 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .acoes button,
+        .acoes a {
+            font: inherit;
+            font-size: 10pt;
+            padding: 6px 14px;
+            border: 1px solid #000;
+            background: #fff;
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .acoes button { background: #000; color: #fff; }
+
+        .folha {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 40px;
+            background: #fff;
+            border: 1px solid #ccc;
+        }
+
+        .cabecalho {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+
+        .cabecalho .assistencia {
+            font-size: 13pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .cabecalho h1 { font-size: 16pt; margin: 6px 0 2px; }
+        .cabecalho p { margin: 2px 0; }
+        .cabecalho .numero { font-size: 13pt; }
+
+        section { margin-bottom: 14px; break-inside: avoid; }
+
+        h2 {
+            font-size: 10.5pt;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+            margin: 0 0 6px;
+        }
+
+        dl {
+            display: grid;
+            grid-template-columns: 170px 1fr;
+            gap: 2px 10px;
+            margin: 0;
+        }
+
+        dt { font-weight: bold; }
+        dd { margin: 0; }
+
+        .tabela-valores {
+            width: 65%;
+            border-collapse: collapse;
+        }
+
+        .tabela-valores td {
+            border: 1px solid #000;
+            padding: 4px 10px;
+        }
+
+        .tabela-valores td:last-child { text-align: right; }
+
+        .tabela-valores .total td { font-weight: bold; }
+
+        .rodape {
+            margin-top: 24px;
+            padding-top: 8px;
+            border-top: 1px solid #999;
+            font-size: 9pt;
+            text-align: center;
+        }
+
+        @@media print {
+            body { background: #fff; padding: 0; font-size: 11pt; }
+
+            .acoes { display: none !important; }
+
+            .folha {
+                max-width: none;
+                margin: 0;
+                padding: 0;
+                border: none;
+            }
+
+            * {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="acoes">
+        <button type="button" onclick="window.print()">Imprimir</button>
+        <a href="@Url.Action("Details", "OrdensServico", new { id = Model.Id })">Voltar à OS</a>
+    </div>
+
+    <main class="folha">
+        <header class="cabecalho">
+            <p class="assistencia">@Aplicacao.NomeAssistencia</p>
+            <h1>Ordem de Serviço</h1>
+            <p class="numero"><strong>@Model.NumeroOS</strong></p>
+            <p>
+                Entrada: @Model.DataEntrada.ToString("dd/MM/yyyy HH:mm")
+                &middot; Status: @Model.Status.Descricao()
+            </p>
+        </header>
+
+        <section>
+            <h2>Cliente</h2>
+            <dl>
+                <dt>Nome</dt>
+                <dd>@Model.Cliente?.NomeCompleto</dd>
+                <dt>Telefone</dt>
+                <dd>@Telefone.Formatar(Model.Cliente?.Telefone ?? string.Empty)</dd>
+                <dt>CPF</dt>
+                <dd>@Cpf.Formatar(Model.Cliente?.Cpf ?? string.Empty)</dd>
+            </dl>
+        </section>
+
+        <section>
+            <h2>Aparelho</h2>
+            <dl>
+                <dt>Tipo</dt>
+                <dd>@Model.Aparelho?.TipoAparelho</dd>
+                <dt>Marca e modelo</dt>
+                <dd>@Model.Aparelho?.Descricao</dd>
+                <dt>Cor</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.Aparelho?.Cor) ? "Não informada" : Model.Aparelho!.Cor)</dd>
+                @if (!string.IsNullOrWhiteSpace(Model.Aparelho?.ImeiNumeroSerie))
+                {
+                    <dt>IMEI / Número de série</dt>
+                    <dd>@Model.Aparelho!.ImeiNumeroSerie</dd>
+                }
+            </dl>
+        </section>
+
+        <section>
+            <h2>Entrada</h2>
+            <dl>
+                <dt>Defeito relatado</dt>
+                <dd>@Model.DefeitoRelatado</dd>
+                <dt>Estado físico na entrada</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.EstadoFisicoEntrada) ? "Não informado" : Model.EstadoFisicoEntrada)</dd>
+                <dt>Acessórios entregues</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.AcessoriosEntregues) ? "Nenhum" : Model.AcessoriosEntregues)</dd>
+                <dt>Observações da entrada</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.ObservacoesEntrada) ? "Nenhuma" : Model.ObservacoesEntrada)</dd>
+            </dl>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(Model.DiagnosticoTecnico) || !string.IsNullOrWhiteSpace(Model.ServicoRealizado))
+        {
+            <section>
+                <h2>Diagnóstico e serviço</h2>
+                <dl>
+                    @if (!string.IsNullOrWhiteSpace(Model.DiagnosticoTecnico))
+                    {
+                        <dt>Diagnóstico técnico</dt>
+                        <dd>@Model.DiagnosticoTecnico</dd>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.ServicoRealizado))
+                    {
+                        <dt>Serviço realizado</dt>
+                        <dd>@Model.ServicoRealizado</dd>
+                    }
+                </dl>
+            </section>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.PecasUtilizadas))
+        {
+            <section>
+                <h2>Peças utilizadas</h2>
+                <p>@Model.PecasUtilizadas</p>
+            </section>
+        }
+
+        <section>
+            <h2>Valores</h2>
+            @if (temValores)
+            {
+                <table class="tabela-valores">
+                    <tbody>
+                        <tr>
+                            <td>Peças</td>
+                            <td>@ValoresMonetarios.Formatar(Model.ValorPecas)</td>
+                        </tr>
+                        <tr>
+                            <td>Mão de obra</td>
+                            <td>@ValoresMonetarios.Formatar(Model.ValorMaoDeObra)</td>
+                        </tr>
+                        <tr class="total">
+                            <td>Total</td>
+                            <td>@ValoresMonetarios.Formatar(Model.ValorTotal)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p>Orçamento ainda não informado.</p>
+            }
+        </section>
+
+        @if (Model.DataConclusao is not null || Model.DataRetirada is not null)
+        {
+            <section>
+                <h2>Datas</h2>
+                <dl>
+                    @if (Model.DataConclusao is not null)
+                    {
+                        <dt>Conclusão do reparo</dt>
+                        <dd>@Model.DataConclusao.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
+                    @if (Model.DataRetirada is not null)
+                    {
+                        <dt>Retirada do aparelho</dt>
+                        <dd>@Model.DataRetirada.Value.ToString("dd/MM/yyyy HH:mm")</dd>
+                    }
+                </dl>
+            </section>
+        }
+
+        <footer class="rodape">
+            @Aplicacao.NomeAssistencia &middot; Documento gerado em @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+            &middot; OS @Model.NumeroOS
+        </footer>
+    </main>
+</body>
+</html>

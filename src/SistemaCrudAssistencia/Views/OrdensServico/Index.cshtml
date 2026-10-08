@@ -1,0 +1,99 @@
+@using SistemaCrudAssistencia.Models.Extensions
+@model OrdensServicoIndexViewModel
+@{
+    ViewData["Title"] = "Ordens de Serviço";
+}
+
+<section aria-labelledby="ordens-title">
+    @if (TempData["Sucesso"] is string sucesso)
+    {
+        <div class="alert alert-success" role="status">@sucesso</div>
+    }
+
+    <div class="page-heading page-heading-actions">
+        <div>
+            <p class="eyebrow">Atendimento</p>
+            <h1 id="ordens-title">Ordens de Serviço</h1>
+            <p class="page-subtitle">Acompanhe entradas, reparos, retiradas e o histórico completo.</p>
+        </div>
+        <a class="btn btn-primary" asp-action="Nova">+ Nova Ordem de Serviço</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Pesquisar" method="post" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label asp-for="Filtro.Busca" class="form-label">Buscar</label>
+                    <input asp-for="Filtro.Busca" class="form-control" type="search"
+                           placeholder="Número da OS, CPF, nome, telefone ou IMEI" autocomplete="off" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Filtro.Status" class="form-label">Status</label>
+                    <select asp-for="Filtro.Status" class="form-select">
+                        <option value="">Todos</option>
+                        @foreach (var status in StatusOrdemServicoExtensions.Todos())
+                        {
+                            <option value="@status">@status.Descricao()</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <input asp-for="Filtro.SomenteEmAndamento" class="form-check-input" />
+                        <label asp-for="Filtro.SomenteEmAndamento" class="form-check-label">Só em andamento</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" type="submit">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center gap-3">
+            <h2 class="h5 mb-0">@(Model.Filtro.TemFiltro ? "Resultado da pesquisa" : "Ordens de serviço")</h2>
+            <span class="text-muted small">@Model.Ordens.Count registro(s)</span>
+        </div>
+        @if (Model.Ordens.Count == 0)
+        {
+            <div class="card-body text-center text-muted py-5">Nenhuma ordem de serviço encontrada.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover client-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>OS</th>
+                            <th>Cliente</th>
+                            <th>Aparelho</th>
+                            <th>Entrada</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ordem in Model.Ordens)
+                        {
+                            <tr>
+                                <td data-label="OS" class="fw-semibold">@ordem.NumeroOS</td>
+                                <td data-label="Cliente">@ordem.Cliente?.NomeCompleto</td>
+                                <td data-label="Aparelho">@ordem.DescricaoAparelho</td>
+                                <td data-label="Entrada">@ordem.DataEntrada.ToString("dd/MM/yyyy")</td>
+                                <td data-label="Status"><span class="badge @ordem.Status.BadgeCss()">@ordem.Status.Descricao()</span></td>
+                                <td data-label="Ações" class="text-end text-nowrap">
+                                    <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@ordem.Id">Detalhes</a>
+                                    @if (ordem.EstaEmAndamento)
+                                    {
+                                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@ordem.Id">Editar</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

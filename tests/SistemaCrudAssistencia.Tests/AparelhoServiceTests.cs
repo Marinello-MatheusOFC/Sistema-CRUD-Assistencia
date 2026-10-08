@@ -77,4 +77,22 @@ public class AparelhoServiceTests
         var encontrados = await aparelhos.BuscarPorImeiAsync("SERIAL-IGUAL");
         Assert.Equal(2, encontrados.Count);
     }
+
+    [Fact]
+    public async Task BuscarDetalhesAsync_IncluiHistoricoDeOrdensDeServico()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var aparelhos = new AparelhoService(contexto);
+        var cliente = BancoEmMemoria.NovoCliente();
+        var aparelho = await contexto.ClienteComAparelhoAsync(cliente);
+        var ordem = BancoEmMemoria.NovaOrdem(cliente.Id, aparelho.Id);
+        await new OrdemServicoService(contexto).AbrirAsync(ordem, "balcao@assistencia");
+
+        var detalhes = await aparelhos.BuscarDetalhesAsync(aparelho.Id);
+
+        Assert.NotNull(detalhes);
+        Assert.Equal(cliente.Id, detalhes.ClienteId);
+        var os = Assert.Single(detalhes.OrdensServico);
+        Assert.Equal(ordem.Id, os.Id);
+    }
 }

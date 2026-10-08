@@ -1,0 +1,29 @@
+# Contexto de build do Docker — mantenha apenas o necessário
+
+# Controle de versão e IDE
+.git
+.github
+.vs
+.vscode
+.idea
+
+# Artefatos de build locais
+**/bin/
+**/obj/
+**/[Tt]est[Rr]esults/
+
+# Fora do contexto da imagem (o Dockerfile só copia src/SistemaCrudAssistencia)
+tests/
+DIAGNOSTICO.txt
+README.md
+Dockerfile
+docker-compose.yml
+
+# Nunca enviar variáveis/credenciais para a imagem
+.env
+.env.*
+!.env.example
+
+# Sistema
+Thumbs.db
+*.user

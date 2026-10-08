@@ -33,7 +33,11 @@
     <div class="row g-3">
         <div class="col-md-4">
             <label asp-for="Cep" class="form-label"></label>
-            <input asp-for="Cep" class="form-control" inputmode="numeric" autocomplete="postal-code" />
+            <div class="input-group">
+                <input asp-for="Cep" class="form-control" inputmode="numeric" autocomplete="postal-code" data-viacep-cep />
+                <button class="btn btn-outline-secondary" type="button" data-viacep data-viacep-url="@Url.Action("Consultar", "Ceps")">Buscar CEP</button>
+            </div>
+            <div class="form-text" data-viacep-msg role="status"></div>
             <span asp-validation-for="Cep" class="field-validation-error"></span>
         </div>
         <div class="col-md-8">
