@@ -36,6 +36,8 @@ public interface IOrdemServicoService
 
 public class OrdemServicoService(AppDbContext contexto) : IOrdemServicoService
 {
+    private const int TamanhoMaximoObservacao = 1000;
+
     public Task<OrdemServico?> BuscarAsync(int id, CancellationToken cancellationToken = default) =>
         contexto.OrdensServico
             .Include(o => o.Cliente)
@@ -182,6 +184,10 @@ public class OrdemServicoService(AppDbContext contexto) : IOrdemServicoService
         if (string.IsNullOrWhiteSpace(observacao))
             throw new RegraDeNegocioException("Informe a observação da anotação.");
 
+        if (observacao.Trim().Length > TamanhoMaximoObservacao)
+            throw new RegraDeNegocioException(
+                $"A observação da anotação pode ter no máximo {TamanhoMaximoObservacao} caracteres.");
+
         var ordemServico = await BuscarParaAlteracaoAsync(id, cancellationToken);
 
         contexto.Historicos.Add(new HistoricoOrdemServico
@@ -208,6 +214,10 @@ public class OrdemServicoService(AppDbContext contexto) : IOrdemServicoService
         if (novoStatus == StatusOrdemServico.Entregue && !ordemServico.Status.PermiteRetirada())
             throw new RegraDeNegocioException(
                 "Só é possível registrar a retirada quando a OS estiver com o status Pronto.");
+
+        if (!string.IsNullOrWhiteSpace(observacao) && observacao.Trim().Length > TamanhoMaximoObservacao)
+            throw new RegraDeNegocioException(
+                $"A observação pode ter no máximo {TamanhoMaximoObservacao} caracteres.");
 
         var statusAnterior = ordemServico.Status;
 

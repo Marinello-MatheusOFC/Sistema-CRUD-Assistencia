@@ -163,7 +163,7 @@
                             </div>
                             <div class="col-12">
                                 <label asp-for="NovoAparelho.Observacoes" class="form-label"></label>
-                                <textarea asp-for="NovoAparelho.Observacoes" class="form-control" rows="3"></textarea>
+                                <textarea asp-for="NovoAparelho.Observacoes" class="form-control" rows="3" maxlength="500"></textarea>
                                 <span asp-validation-for="NovoAparelho.Observacoes" class="field-validation-error"></span>
                             </div>
                         </div>
@@ -175,25 +175,25 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label asp-for="DefeitoRelatado" class="form-label"></label>
-                            <textarea asp-for="DefeitoRelatado" class="form-control" rows="3"
+                            <textarea asp-for="DefeitoRelatado" class="form-control" rows="3" maxlength="1000"
                                       placeholder="Descreva o defeito relatado pelo cliente"></textarea>
                             <span asp-validation-for="DefeitoRelatado" class="field-validation-error"></span>
                         </div>
                         <div class="col-md-6">
                             <label asp-for="EstadoFisicoEntrada" class="form-label"></label>
-                            <textarea asp-for="EstadoFisicoEntrada" class="form-control" rows="2"
+                            <textarea asp-for="EstadoFisicoEntrada" class="form-control" rows="2" maxlength="500"
                                       placeholder="Ex.: tela trincada, corpo amassado..."></textarea>
                             <span asp-validation-for="EstadoFisicoEntrada" class="field-validation-error"></span>
                         </div>
                         <div class="col-md-6">
                             <label asp-for="AcessoriosEntregues" class="form-label"></label>
-                            <textarea asp-for="AcessoriosEntregues" class="form-control" rows="2"
+                            <textarea asp-for="AcessoriosEntregues" class="form-control" rows="2" maxlength="500"
                                       placeholder="Ex.: capa, carregador, película..."></textarea>
                             <span asp-validation-for="AcessoriosEntregues" class="field-validation-error"></span>
                         </div>
                         <div class="col-12">
                             <label asp-for="ObservacoesEntrada" class="form-label"></label>
-                            <textarea asp-for="ObservacoesEntrada" class="form-control" rows="2"
+                            <textarea asp-for="ObservacoesEntrada" class="form-control" rows="2" maxlength="1000"
                                       placeholder="Observações gerais da entrada"></textarea>
                             <span asp-validation-for="ObservacoesEntrada" class="field-validation-error"></span>
                         </div>

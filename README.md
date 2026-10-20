@@ -20,7 +20,7 @@ servidor próprio, com execução via Docker ou diretamente com o .NET SDK.
 
 ## Funcionalidades existentes
 
-- **Dashboard** com indicadores de clientes, aparelhos e OS (abertas, prontas, atrasadas).
+- **Dashboard** com indicadores de OS por status (abertas, em análise, aguardando peça, em reparo, prontas para retirada) e listagem das últimas 10 OS.
 - **Clientes**: busca, cadastro, edição, detalhes, desativação/reativação (não apaga histórico), CPF único validado no servidor.
 - **Aparelhos**: listagem global com pesquisa (tipo, marca, modelo, IMEI/nº de série e proprietário), cadastro por cliente, edição (proprietário imutável), detalhes com histórico de OS.
 - **Ordens de Serviço**: criação assistida, listagem com filtros, detalhes completos, edição de diagnóstico/serviço/peças/valores, alteração de status com histórico, anotações livres no histórico, finalização e retirada.

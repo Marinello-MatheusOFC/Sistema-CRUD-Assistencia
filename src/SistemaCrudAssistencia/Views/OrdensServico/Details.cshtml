@@ -54,7 +54,7 @@
                     <div class="confirmation-panel">
                         <form asp-action="Finalizar" asp-route-id="@ordem.Id" method="post">
                             <label class="form-label" for="obs-finalizar">Observação (opcional)</label>
-                            <input class="form-control" id="obs-finalizar" name="observacao" autocomplete="off" />
+                            <input class="form-control" id="obs-finalizar" name="observacao" autocomplete="off" maxlength="1000" />
                             <p class="small text-muted mb-2">Move a OS para <strong>Pronto</strong> e agenda a retirada.</p>
                             <button class="btn btn-success" type="submit">Confirmar finalização</button>
                         </form>
@@ -68,7 +68,7 @@
                     <div class="confirmation-panel">
                         <form asp-action="RegistrarRetirada" asp-route-id="@ordem.Id" method="post">
                             <label class="form-label" for="obs-retirada">Observação (opcional)</label>
-                            <input class="form-control" id="obs-retirada" name="observacao" autocomplete="off" />
+                            <input class="form-control" id="obs-retirada" name="observacao" autocomplete="off" maxlength="1000" />
                             <p class="small text-muted mb-2">Move a OS de <strong>Pronto</strong> para <strong>Entregue</strong>.</p>
                             <button class="btn btn-dark" type="submit">Confirmar retirada</button>
                         </form>
@@ -181,7 +181,7 @@
                     </div>
                     <div class="col-md-5">
                         <label class="form-label" for="observacao-status">Observação (opcional)</label>
-                        <input class="form-control" id="observacao-status" name="observacao" autocomplete="off" />
+                        <input class="form-control" id="observacao-status" name="observacao" autocomplete="off" maxlength="1000" />
                     </div>
                     <div class="col-md-2">
                         <button class="btn btn-primary w-100" type="submit">Alterar</button>
@@ -198,7 +198,7 @@
             <form asp-action="RegistrarAnotacao" asp-route-id="@ordem.Id" method="post" class="row g-3 align-items-end">
                 <div class="col-md-10">
                     <label class="form-label" for="anotacao-observacao">Observação</label>
-                    <textarea class="form-control" id="anotacao-observacao" name="observacao" rows="2" required></textarea>
+                    <textarea class="form-control" id="anotacao-observacao" name="observacao" rows="2" maxlength="1000" required></textarea>
                 </div>
                 <div class="col-md-2">
                     <button class="btn btn-outline-primary w-100" type="submit">Registrar anotação</button>

@@ -22,22 +22,22 @@
                 <div class="row g-3">
                     <div class="col-12">
                         <label asp-for="DefeitoRelatado" class="form-label"></label>
-                        <textarea asp-for="DefeitoRelatado" class="form-control" rows="3"></textarea>
+                        <textarea asp-for="DefeitoRelatado" class="form-control" rows="3" maxlength="1000"></textarea>
                         <span asp-validation-for="DefeitoRelatado" class="field-validation-error"></span>
                     </div>
                     <div class="col-md-6">
                         <label asp-for="EstadoFisicoEntrada" class="form-label"></label>
-                        <textarea asp-for="EstadoFisicoEntrada" class="form-control" rows="2"></textarea>
+                        <textarea asp-for="EstadoFisicoEntrada" class="form-control" rows="2" maxlength="500"></textarea>
                         <span asp-validation-for="EstadoFisicoEntrada" class="field-validation-error"></span>
                     </div>
                     <div class="col-md-6">
                         <label asp-for="AcessoriosEntregues" class="form-label"></label>
-                        <textarea asp-for="AcessoriosEntregues" class="form-control" rows="2"></textarea>
+                        <textarea asp-for="AcessoriosEntregues" class="form-control" rows="2" maxlength="500"></textarea>
                         <span asp-validation-for="AcessoriosEntregues" class="field-validation-error"></span>
                     </div>
                     <div class="col-12">
                         <label asp-for="ObservacoesEntrada" class="form-label"></label>
-                        <textarea asp-for="ObservacoesEntrada" class="form-control" rows="2"></textarea>
+                        <textarea asp-for="ObservacoesEntrada" class="form-control" rows="2" maxlength="1000"></textarea>
                         <span asp-validation-for="ObservacoesEntrada" class="field-validation-error"></span>
                     </div>
                 </div>
@@ -48,22 +48,22 @@
                 <div class="row g-3">
                     <div class="col-12">
                         <label asp-for="DiagnosticoTecnico" class="form-label"></label>
-                        <textarea asp-for="DiagnosticoTecnico" class="form-control" rows="3"></textarea>
+                        <textarea asp-for="DiagnosticoTecnico" class="form-control" rows="3" maxlength="2000"></textarea>
                         <span asp-validation-for="DiagnosticoTecnico" class="field-validation-error"></span>
                     </div>
                     <div class="col-12">
                         <label asp-for="ServicoRealizado" class="form-label"></label>
-                        <textarea asp-for="ServicoRealizado" class="form-control" rows="3"></textarea>
+                        <textarea asp-for="ServicoRealizado" class="form-control" rows="3" maxlength="2000"></textarea>
                         <span asp-validation-for="ServicoRealizado" class="field-validation-error"></span>
                     </div>
                     <div class="col-12">
                         <label asp-for="PecasUtilizadas" class="form-label"></label>
-                        <textarea asp-for="PecasUtilizadas" class="form-control" rows="2"></textarea>
+                        <textarea asp-for="PecasUtilizadas" class="form-control" rows="2" maxlength="1000"></textarea>
                         <span asp-validation-for="PecasUtilizadas" class="field-validation-error"></span>
                     </div>
                     <div class="col-12">
                         <label asp-for="ObservacoesInternas" class="form-label"></label>
-                        <textarea asp-for="ObservacoesInternas" class="form-control" rows="2"></textarea>
+                        <textarea asp-for="ObservacoesInternas" class="form-control" rows="2" maxlength="1000"></textarea>
                         <div class="form-text">Visível apenas para a equipe.</div>
                         <span asp-validation-for="ObservacoesInternas" class="field-validation-error"></span>
                     </div>

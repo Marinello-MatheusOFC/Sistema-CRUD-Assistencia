@@ -314,6 +314,66 @@ public class OrdemServicoServiceTests
     }
 
     [Fact]
+    public async Task RegistrarAnotacaoAsync_ObservacaoNoTamanhoMaximo_EhAceita()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var ordens = new OrdemServicoService(contexto);
+        var cliente = BancoEmMemoria.NovoCliente();
+        var aparelho = await contexto.ClienteComAparelhoAsync(cliente);
+
+        var ordem = BancoEmMemoria.NovaOrdem(cliente.Id, aparelho.Id);
+        await ordens.AbrirAsync(ordem, Usuario);
+        await ordens.RegistrarAnotacaoAsync(ordem.Id, new string('A', 1000), Usuario);
+
+        var lida = await ordens.BuscarAsync(ordem.Id);
+        Assert.NotNull(lida);
+        Assert.Equal(2, lida.Historico.Count);
+        Assert.Equal(1000, lida.Historico.Single(h => h.StatusAnterior == StatusOrdemServico.Recebido
+                                                   && h.NovoStatus == StatusOrdemServico.Recebido).Observacao!.Length);
+    }
+
+    [Fact]
+    public async Task RegistrarAnotacaoAsync_ObservacaoAcimaDoTamanhoMaximo_EhRecusadaAntesDePersistir()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var ordens = new OrdemServicoService(contexto);
+        var cliente = BancoEmMemoria.NovoCliente();
+        var aparelho = await contexto.ClienteComAparelhoAsync(cliente);
+
+        var ordem = BancoEmMemoria.NovaOrdem(cliente.Id, aparelho.Id);
+        await ordens.AbrirAsync(ordem, Usuario);
+
+        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(
+            () => ordens.RegistrarAnotacaoAsync(ordem.Id, new string('A', 1001), Usuario));
+
+        Assert.Equal("A observação da anotação pode ter no máximo 1000 caracteres.", erro.Message);
+        var lida = await ordens.BuscarAsync(ordem.Id);
+        Assert.NotNull(lida);
+        Assert.Single(lida.Historico); // apenas a abertura — nada foi gravado
+    }
+
+    [Fact]
+    public async Task AlterarStatusAsync_ObservacaoAcimaDoTamanhoMaximo_EhRecusadaAntesDePersistir()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var ordens = new OrdemServicoService(contexto);
+        var cliente = BancoEmMemoria.NovoCliente();
+        var aparelho = await contexto.ClienteComAparelhoAsync(cliente);
+
+        var ordem = BancoEmMemoria.NovaOrdem(cliente.Id, aparelho.Id);
+        await ordens.AbrirAsync(ordem, Usuario);
+
+        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(
+            () => ordens.AlterarStatusAsync(ordem.Id, StatusOrdemServico.EmAnalise, new string('B', 1001), Usuario));
+
+        Assert.Equal("A observação pode ter no máximo 1000 caracteres.", erro.Message);
+        var lida = await ordens.BuscarAsync(ordem.Id);
+        Assert.NotNull(lida);
+        Assert.Equal(StatusOrdemServico.Recebido, lida.Status); // status intocado
+        Assert.Single(lida.Historico); // apenas a abertura — nada foi gravado
+    }
+
+    [Fact]
     public async Task EntregueESaoCanceladoSaoSituacoesTerminais()
     {
         await using var contexto = BancoEmMemoria.Criar();

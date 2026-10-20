@@ -41,11 +41,11 @@ public class OrdemServicoFormViewModel
     public string? ServicoRealizado { get; set; }
 
     [Display(Name = "Peças utilizadas")]
-    [StringLength(2000)]
+    [StringLength(1000, ErrorMessage = "Peças utilizadas pode ter no máximo 1000 caracteres.")]
     public string? PecasUtilizadas { get; set; }
 
     [Display(Name = "Observações internas")]
-    [StringLength(2000)]
+    [StringLength(1000, ErrorMessage = "Observações internas pode ter no máximo 1000 caracteres.")]
     public string? ObservacoesInternas { get; set; }
 
     /// <summary>Texto digitado pelo usuário; convertido SOMENTE no servidor.</summary>
