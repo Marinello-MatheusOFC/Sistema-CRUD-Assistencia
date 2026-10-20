@@ -6,9 +6,11 @@ using Microsoft.Extensions.Configuration;
 namespace SistemaCrudAssistencia.Data;
 
 /// <summary>
-/// Permite criar migrations sem precisar subir a aplicação e sem conexão com o banco.
-/// A connection string usada aqui serve apenas para montar o modelo; a migration
-/// é gerada a partir do modelo, não a partir de um banco existente.
+/// Permite criar migrations sem precisar subir a aplicação.
+/// Prioridade da connection string: variável de ambiente
+/// ConnectionStrings__Default (a mesma que a aplicação exige em runtime)
+/// -> configuration -> placeholder de design-time, usado SOMENTE para
+/// montar o modelo da migration (a migration vem do modelo, não do banco).
 /// </summary>
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
@@ -17,10 +19,13 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
 
     public AppDbContext CreateDbContext(string[] args)
     {
-        var connectionString =
-            Environment.GetEnvironmentVariable("ConnectionStrings__Default")
-            ?? new ConfigurationBuilder().Build()["ConnectionStrings:Default"]
-            ?? ConnectionStringDesignTime;
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Default");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+            connectionString = new ConfigurationBuilder().Build()["ConnectionStrings:Default"];
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+            connectionString = ConnectionStringDesignTime;
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(connectionString, npgsql => npgsql.MigrationsAssembly(
