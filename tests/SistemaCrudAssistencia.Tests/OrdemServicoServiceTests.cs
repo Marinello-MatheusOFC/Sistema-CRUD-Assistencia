@@ -353,6 +353,25 @@ public class OrdemServicoServiceTests
     }
 
     [Fact]
+    public async Task AlterarStatusAsync_ObservacaoNoTamanhoMaximo_EhAceita()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var ordens = new OrdemServicoService(contexto);
+        var cliente = BancoEmMemoria.NovoCliente();
+        var aparelho = await contexto.ClienteComAparelhoAsync(cliente);
+
+        var ordem = BancoEmMemoria.NovaOrdem(cliente.Id, aparelho.Id);
+        await ordens.AbrirAsync(ordem, Usuario);
+        await ordens.AlterarStatusAsync(ordem.Id, StatusOrdemServico.EmAnalise, new string('B', 1000), Usuario);
+
+        var lida = await ordens.BuscarAsync(ordem.Id);
+        Assert.NotNull(lida);
+        Assert.Equal(StatusOrdemServico.EmAnalise, lida.Status);
+        Assert.Equal(2, lida.Historico.Count);
+        Assert.Equal(1000, lida.Historico.Single(h => h.NovoStatus == StatusOrdemServico.EmAnalise).Observacao!.Length);
+    }
+
+    [Fact]
     public async Task AlterarStatusAsync_ObservacaoAcimaDoTamanhoMaximo_EhRecusadaAntesDePersistir()
     {
         await using var contexto = BancoEmMemoria.Criar();

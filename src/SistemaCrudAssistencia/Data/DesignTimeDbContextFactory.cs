@@ -28,8 +28,11 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
             connectionString = ConnectionStringDesignTime;
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(connectionString, npgsql => npgsql.MigrationsAssembly(
-                typeof(AppDbContext).Assembly.GetName()!.Name))
+            .UseNpgsql(connectionString, npgsql =>
+            {
+                npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.GetName()!.Name);
+                npgsql.MigrationsHistoryTable("__migrations_historico");
+            })
             .Options;
 
         return new AppDbContext(options);

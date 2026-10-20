@@ -207,16 +207,38 @@ SistemaCrudAssistencia.slnx
 
 ## Status do projeto
 
-Etapas 1 a 11 do plano de desenvolvimento executadas e commitadas (fundação,
-autenticação, dashboard, clientes, aparelhos, ordens de serviço,
-busca/impressão/ViaCEP, testes das regras críticas e finalização com
-documentação/Docker — commit `fd5beba`). Após o commit, um acabamento pós-V1
-foi executado no working tree (sem commit): listagem global de aparelhos,
-anotação de OS exposta na tela de detalhes e testes correspondentes.
+Funcionalidades das 11 etapas do plano **implementadas** (fundação,
+autenticação, dashboard, clientes, aparelhos, ordens de serviço com histórico,
+anotações, busca, impressão, ViaCEP, seed e documentação/Docker), mais o
+acabamento pós-V1: listagem global de aparelhos com pesquisa e anotação de OS
+exposta na tela de detalhes.
 
-A validação em runtime do Docker e do PostgreSQL real não foi possível na
-máquina de desenvolvimento (Docker/PostgreSQL não instalados) — o compose e o
-Dockerfile seguem prontos para uso em ambiente com Docker.
+### O que foi verificado nesta máquina (runtime real)
 
-Detalhes técnicos, limitações conhecidas e pendências de implantação:
-veja `DIAGNOSTICO.txt`.
+- **Build da solução** compila sem erros e sem warnings com o SDK
+  .NET 10 (`dotnet build`).
+- **Suíte de testes xUnit** executada com `dotnet test` (SQLite em memória
+  com constraints reais): regras de CPF, cálculo de valores, fluxo de status,
+  histórico, limites de campos (peças utilizadas, observações internas,
+  anotação e observação de mudança de status — tamanho máximo e máximo + 1),
+  integridade do banco, antiforgery/autorização, ViewModels e ViaCEP (com
+  HTTP simulado, sem chamada de rede).
+
+### O que NÃO foi validado em runtime nesta máquina
+
+- **Docker / Docker Compose**: Docker não está instalado aqui. `Dockerfile`,
+  `docker-compose.yml` e `.dockerignore` foram revisados apenas
+  estaticamente — `docker compose build/up` não foi executado.
+- **PostgreSQL real**: não há PostgreSQL local. O banco real, as migrations
+  aplicadas em runtime e o seed contra PostgreSQL **não** foram exercitados
+  (os testes usam SQLite em memória).
+- **Fluxo pelo navegador**: login, dashboard, cadastros e wizard de OS não
+  foram percorridos em um navegador — não há validação visual, de
+  responsividade nem de JavaScript em execução real.
+- **ViaCEP externo**: apenas o cliente HTTP foi testado com resposta
+  simulada; a chamada real ao ViaCEP não foi feita daqui.
+
+Ou seja: código completo e coberto por testes automatizados, mas a subida com
+Docker + PostgreSQL e o uso pelo navegador permanecem **pendentes de
+validação** em ambiente com essas ferramentas. Checklist de pendências de
+implantação e limitações conhecidas: `DIAGNOSTICO.txt`.
