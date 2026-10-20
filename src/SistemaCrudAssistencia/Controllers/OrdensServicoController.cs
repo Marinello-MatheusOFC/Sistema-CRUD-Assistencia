@@ -384,6 +384,26 @@ public class OrdensServicoController(
         return RedirectToAction(nameof(Details), new { id });
     }
 
+    /// <summary>
+    /// Registra uma anotação no histórico da OS sem mudar o status.
+    /// O usuário vem sempre da identidade autenticada, nunca do formulário.
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> RegistrarAnotacao(int id, string? observacao, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await ordemServicoService.RegistrarAnotacaoAsync(id, observacao, UsuarioAtual, cancellationToken);
+            TempData["Sucesso"] = "Anotação registrada no histórico da OS.";
+        }
+        catch (RegraDeNegocioException ex)
+        {
+            TempData["Erro"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
     // ----------------------------------------------------------------
     // Auxiliares (apenas apresentação, sem regra de negócio)
     // ----------------------------------------------------------------

@@ -256,6 +256,64 @@ public class OrdemServicoServiceTests
     }
 
     [Fact]
+    public async Task RegistrarAnotacaoAsync_GeraHistoricoSemAlterarStatusEPreservaTextoEUsuario()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var ordens = new OrdemServicoService(contexto);
+        var cliente = BancoEmMemoria.NovoCliente();
+        var aparelho = await contexto.ClienteComAparelhoAsync(cliente);
+
+        var ordem = BancoEmMemoria.NovaOrdem(cliente.Id, aparelho.Id);
+        await ordens.AbrirAsync(ordem, Usuario);
+        await ordens.RegistrarAnotacaoAsync(ordem.Id, "  Cliente autorizou o orçamento por telefone.  ", "tecnico@assistencia");
+
+        var lida = await ordens.BuscarAsync(ordem.Id);
+        Assert.NotNull(lida);
+        Assert.Equal(StatusOrdemServico.Recebido, lida.Status); // status intocado
+        Assert.Equal(2, lida.Historico.Count);
+
+        var anotacao = lida.Historico.Single(h => h.StatusAnterior == StatusOrdemServico.Recebido
+                                               && h.NovoStatus == StatusOrdemServico.Recebido);
+        Assert.Equal("Cliente autorizou o orçamento por telefone.", anotacao.Observacao); // trim feito no service
+        Assert.Equal("tecnico@assistencia", anotacao.Usuario);
+        Assert.NotEqual(default, anotacao.Data);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task RegistrarAnotacaoAsync_ObservacaoVaziaOuSoEspacos_EhRecusada(string observacao)
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var ordens = new OrdemServicoService(contexto);
+        var cliente = BancoEmMemoria.NovoCliente();
+        var aparelho = await contexto.ClienteComAparelhoAsync(cliente);
+
+        var ordem = BancoEmMemoria.NovaOrdem(cliente.Id, aparelho.Id);
+        await ordens.AbrirAsync(ordem, Usuario);
+
+        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(
+            () => ordens.RegistrarAnotacaoAsync(ordem.Id, observacao, Usuario));
+
+        Assert.Equal("Informe a observação da anotação.", erro.Message);
+        var lida = await ordens.BuscarAsync(ordem.Id);
+        Assert.NotNull(lida);
+        Assert.Single(lida.Historico); // apenas a abertura — nada foi gravado
+    }
+
+    [Fact]
+    public async Task RegistrarAnotacaoAsync_OsInexistente_EhRecusada()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var ordens = new OrdemServicoService(contexto);
+
+        var erro = await Assert.ThrowsAsync<RegraDeNegocioException>(
+            () => ordens.RegistrarAnotacaoAsync(id: 999, "Anotação", Usuario));
+
+        Assert.Equal("Ordem de Serviço não encontrada.", erro.Message);
+    }
+
+    [Fact]
     public async Task EntregueESaoCanceladoSaoSituacoesTerminais()
     {
         await using var contexto = BancoEmMemoria.Criar();

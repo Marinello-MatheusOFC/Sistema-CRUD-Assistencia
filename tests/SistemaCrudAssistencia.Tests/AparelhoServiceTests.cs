@@ -79,6 +79,71 @@ public class AparelhoServiceTests
     }
 
     [Fact]
+    public async Task ListarAsync_RetornaAparelhosDeClientesDiferentesComProprietarioCarregado()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var clientes = new ClienteService(contexto);
+        var aparelhos = new AparelhoService(contexto);
+
+        var clienteA = BancoEmMemoria.NovoCliente();
+        var clienteB = BancoEmMemoria.NovoCliente("93541134780", "João da Silva");
+        await clientes.CriarAsync(clienteA);
+        await clientes.CriarAsync(clienteB);
+        await aparelhos.CriarAsync(BancoEmMemoria.NovoAparelho(clienteA.Id, "IMEI-CLIENTE-A"));
+        await aparelhos.CriarAsync(BancoEmMemoria.NovoAparelho(clienteB.Id, "IMEI-CLIENTE-B"));
+
+        var listagem = await aparelhos.ListarAsync();
+
+        Assert.Equal(2, listagem.Count);
+        Assert.Contains(listagem, a => a.ClienteId == clienteA.Id && a.Cliente!.NomeCompleto == clienteA.NomeCompleto);
+        Assert.Contains(listagem, a => a.ClienteId == clienteB.Id && a.Cliente!.NomeCompleto == "João da Silva");
+    }
+
+    [Theory]
+    [InlineData("Samsung")]        // marca
+    [InlineData("Galaxy S21")]     // modelo
+    [InlineData("3520990")]        // IMEI parcial
+    [InlineData("Maria Aparecida")]// proprietário
+    public async Task ListarAsync_FiltraPorMarcaModeloImeiOuProprietario(string termo)
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var clientes = new ClienteService(contexto);
+        var aparelhos = new AparelhoService(contexto);
+
+        var clienteA = BancoEmMemoria.NovoCliente();
+        var clienteB = BancoEmMemoria.NovoCliente("93541134780", "João da Silva");
+        await clientes.CriarAsync(clienteA);
+        await clientes.CriarAsync(clienteB);
+        await aparelhos.CriarAsync(BancoEmMemoria.NovoAparelho(clienteA.Id, "352099001761481"));
+        var outro = BancoEmMemoria.NovoAparelho(clienteB.Id, "IMEI-OUTRO");
+        outro.TipoAparelho = "Notebook";
+        outro.Marca = "Dell";
+        outro.Modelo = "Inspiron 15";
+        await aparelhos.CriarAsync(outro);
+
+        var listagem = await aparelhos.ListarAsync(termo);
+
+        var unico = Assert.Single(listagem);
+        Assert.Equal(clienteA.Id, unico.ClienteId);
+        Assert.Equal("352099001761481", unico.ImeiNumeroSerie);
+    }
+
+    [Fact]
+    public async Task ListarAsync_TermoVazioOuEspacos_RetornaTudoSemLancarErro()
+    {
+        await using var contexto = BancoEmMemoria.Criar();
+        var clientes = new ClienteService(contexto);
+        var aparelhos = new AparelhoService(contexto);
+        var cliente = BancoEmMemoria.NovoCliente();
+        await clientes.CriarAsync(cliente);
+        await aparelhos.CriarAsync(BancoEmMemoria.NovoAparelho(cliente.Id));
+
+        var comEspacos = await aparelhos.ListarAsync("   ");
+
+        Assert.Single(comEspacos);
+    }
+
+    [Fact]
     public async Task BuscarDetalhesAsync_IncluiHistoricoDeOrdensDeServico()
     {
         await using var contexto = BancoEmMemoria.Criar();

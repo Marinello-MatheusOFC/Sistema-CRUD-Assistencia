@@ -193,6 +193,24 @@
     }
 
     <div class="card mt-4">
+        <div class="card-header"><h2 class="h5 mb-0">Adicionar anotação</h2></div>
+        <div class="card-body">
+            <form asp-action="RegistrarAnotacao" asp-route-id="@ordem.Id" method="post" class="row g-3 align-items-end">
+                <div class="col-md-10">
+                    <label class="form-label" for="anotacao-observacao">Observação</label>
+                    <textarea class="form-control" id="anotacao-observacao" name="observacao" rows="2" required></textarea>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-primary w-100" type="submit">Registrar anotação</button>
+                </div>
+            </form>
+            <p class="form-text mb-0 mt-2">
+                A anotação entra no histórico sem mudar o status da OS, com a data e o usuário autenticado do momento.
+            </p>
+        </div>
+    </div>
+
+    <div class="card mt-4">
         <div class="card-header"><h2 class="h5 mb-0">Histórico</h2></div>
         @if (ordem.Historico.Count == 0)
         {

@@ -22,8 +22,8 @@ servidor próprio, com execução via Docker ou diretamente com o .NET SDK.
 
 - **Dashboard** com indicadores de clientes, aparelhos e OS (abertas, prontas, atrasadas).
 - **Clientes**: busca, cadastro, edição, detalhes, desativação/reativação (não apaga histórico), CPF único validado no servidor.
-- **Aparelhos**: cadastro por cliente, edição (proprietário imutável), detalhes com histórico de OS.
-- **Ordens de Serviço**: criação assistida, listagem com filtros, detalhes completos, edição de diagnóstico/serviço/peças/valores, alteração de status com histórico, finalização e retirada.
+- **Aparelhos**: listagem global com pesquisa (tipo, marca, modelo, IMEI/nº de série e proprietário), cadastro por cliente, edição (proprietário imutável), detalhes com histórico de OS.
+- **Ordens de Serviço**: criação assistida, listagem com filtros, detalhes completos, edição de diagnóstico/serviço/peças/valores, alteração de status com histórico, anotações livres no histórico, finalização e retirada.
 - **Impressão da OS** em página dedicada (sem dados internos sensíveis).
 - **Busca rápida unificada** (clientes, aparelhos e OS).
 - **Consulta de CEP** automática (ViaCEP) nos formulários.
@@ -207,13 +207,15 @@ SistemaCrudAssistencia.slnx
 
 ## Status do projeto
 
-Etapas 1 a 11 do plano de desenvolvimento executadas (fundação, autenticação,
-dashboard, clientes, aparelhos, ordens de serviço, busca/impressão/ViaCEP,
-testes das regras críticas e finalização com documentação/Docker).
+Etapas 1 a 11 do plano de desenvolvimento executadas e commitadas (fundação,
+autenticação, dashboard, clientes, aparelhos, ordens de serviço,
+busca/impressão/ViaCEP, testes das regras críticas e finalização com
+documentação/Docker — commit `fd5beba`). Após o commit, um acabamento pós-V1
+foi executado no working tree (sem commit): listagem global de aparelhos,
+anotação de OS exposta na tela de detalhes e testes correspondentes.
 
-Na execução desta etapa (07/10/2026): build sem erros nem avisos e 137 testes
-aprovados, 0 falhas. A validação em runtime do Docker e do PostgreSQL real não
-foi possível nesta máquina (Docker/PostgreSQL não instalados) — o compose e o
+A validação em runtime do Docker e do PostgreSQL real não foi possível na
+máquina de desenvolvimento (Docker/PostgreSQL não instalados) — o compose e o
 Dockerfile seguem prontos para uso em ambiente com Docker.
 
 Detalhes técnicos, limitações conhecidas e pendências de implantação:

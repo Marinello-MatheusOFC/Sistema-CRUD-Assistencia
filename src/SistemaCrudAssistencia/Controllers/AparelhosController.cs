@@ -7,6 +7,20 @@ namespace SistemaCrudAssistencia.Controllers;
 public class AparelhosController(IAparelhoService aparelhoService, IClienteService clienteService) : Controller
 {
     [HttpGet]
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    {
+        var aparelhos = await aparelhoService.ListarAsync(cancellationToken: cancellationToken);
+        return View(new AparelhosIndexViewModel { Aparelhos = aparelhos });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Pesquisar(string? busca, CancellationToken cancellationToken)
+    {
+        var aparelhos = await aparelhoService.ListarAsync(busca, cancellationToken);
+        return View(nameof(Index), new AparelhosIndexViewModel { Busca = busca, Aparelhos = aparelhos });
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Create(int clienteId, CancellationToken cancellationToken)
     {
         var cliente = await clienteService.BuscarPorIdAsync(clienteId, cancellationToken);

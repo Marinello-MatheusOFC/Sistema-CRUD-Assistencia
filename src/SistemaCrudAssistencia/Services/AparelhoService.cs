@@ -14,6 +14,12 @@ public interface IAparelhoService
     Task<List<Aparelho>> ListarPorClienteAsync(int clienteId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Listagem global da tela Aparelhos. A busca opcional cobre tipo, marca,
+    /// modelo, IMEI/número de série e nome do proprietário.
+    /// </summary>
+    Task<List<Aparelho>> ListarAsync(string? busca = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Localiza um aparelho pelo IMEI/número de série, independentemente do cliente.
     /// Usado pela busca rápida.
     /// </summary>
@@ -42,6 +48,33 @@ public class AparelhoService(AppDbContext contexto) : IAparelhoService
             .Where(a => a.ClienteId == clienteId)
             .OrderByDescending(a => a.Id)
             .ToListAsync(cancellationToken);
+
+    public Task<List<Aparelho>> ListarAsync(string? busca = null, CancellationToken cancellationToken = default)
+    {
+        var consulta = contexto.Aparelhos
+            .AsNoTracking()
+            .Include(a => a.Cliente)
+            .AsQueryable();
+
+        var termo = busca?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(termo))
+        {
+            var texto = termo.ToLower();
+
+            consulta = consulta.Where(a =>
+                a.TipoAparelho.ToLower().Contains(texto)
+                || a.Marca.ToLower().Contains(texto)
+                || a.Modelo.ToLower().Contains(texto)
+                || (a.ImeiNumeroSerie != null && a.ImeiNumeroSerie.ToLower().Contains(texto))
+                || a.Cliente!.NomeCompleto.ToLower().Contains(texto));
+        }
+
+        return consulta
+            .OrderByDescending(a => a.Id)
+            .Take(200)
+            .ToListAsync(cancellationToken);
+    }
 
     public Task<List<Aparelho>> BuscarPorImeiAsync(string? imei, CancellationToken cancellationToken = default)
     {

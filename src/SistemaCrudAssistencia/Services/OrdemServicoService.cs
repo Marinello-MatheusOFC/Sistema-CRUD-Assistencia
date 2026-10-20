@@ -30,8 +30,8 @@ public interface IOrdemServicoService
     /// <summary>Registra a retirada: grava a data e move a OS para "Entregue".</summary>
     Task RegistrarRetiradaAsync(int id, string? observacao, string? usuario, CancellationToken cancellationToken = default);
 
-    /// <summary>Adiciona uma anotação ao histórico sem mudar o status.</summary>
-    Task RegistrarAnotacaoAsync(int id, string observacao, string? usuario, CancellationToken cancellationToken = default);
+    /// <summary>Adiciona uma anotação ao histórico sem mudar o status. Recusa texto vazio.</summary>
+    Task RegistrarAnotacaoAsync(int id, string? observacao, string? usuario, CancellationToken cancellationToken = default);
 }
 
 public class OrdemServicoService(AppDbContext contexto) : IOrdemServicoService
@@ -177,8 +177,11 @@ public class OrdemServicoService(AppDbContext contexto) : IOrdemServicoService
     public Task RegistrarRetiradaAsync(int id, string? observacao, string? usuario, CancellationToken cancellationToken = default) =>
         MudarStatusAsync(id, StatusOrdemServico.Entregue, observacao, usuario, true, cancellationToken);
 
-    public async Task RegistrarAnotacaoAsync(int id, string observacao, string? usuario, CancellationToken cancellationToken = default)
+    public async Task RegistrarAnotacaoAsync(int id, string? observacao, string? usuario, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(observacao))
+            throw new RegraDeNegocioException("Informe a observação da anotação.");
+
         var ordemServico = await BuscarParaAlteracaoAsync(id, cancellationToken);
 
         contexto.Historicos.Add(new HistoricoOrdemServico

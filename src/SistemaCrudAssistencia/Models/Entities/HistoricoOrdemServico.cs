@@ -31,5 +31,7 @@ public class HistoricoOrdemServico
     public string Descricao =>
         StatusAnterior is null
             ? $"OS criada com status {NovoStatus?.Descricao() ?? "—"}."
-            : $"Status alterado de {StatusAnterior.Value.Descricao()} para {NovoStatus?.Descricao() ?? "—"}.";
+            : StatusAnterior == NovoStatus
+                ? "Anotação registrada (sem mudança de status)."
+                : $"Status alterado de {StatusAnterior.Value.Descricao()} para {NovoStatus?.Descricao() ?? "—"}.";
 }
